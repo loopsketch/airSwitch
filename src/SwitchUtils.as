@@ -17,9 +17,10 @@
 		}
 
 		public static function formatDate(date:Date):String {
-			var d:String = format(date.fullYear, 4) + "/" + format(date.month + 1, 2) + "/" + format(date.date, 2);
+			var d:String = format(date.fullYear, 4) + "-" + format(date.month + 1, 2) + "-" + format(date.date, 2);
 			var t:String = format(date.hours, 2) + ":" + format(date.minutes, 2) + ":" + format(date.seconds, 2);
-			return d + " " + t;
+			var tz:String = (-date.timezoneOffset >= 0?"+":"") + format(-date.timezoneOffset / 60, 2) + ":" + format(-date.timezoneOffset % 60, 2);
+			return d + "T" + t + tz;
 		}
 
 		/** ディスプレイ情報保存 */
