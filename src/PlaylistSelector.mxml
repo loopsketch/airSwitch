@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:List xmlns:mx="http://www.adobe.com/2006/mxml"
+	dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
+	<mx:itemRenderer>
+		<mx:Component>
+			<mx:HBox backgroundColor="{getColor(data)}" horizontalScrollPolicy="off">
+				<mx:Script><![CDATA[
+					public final function getColor(item:Object):uint {
+						var color:String = item.@color.toString();
+						if (color != "") {
+							return parseInt(color, 16);
+						}
+						return 0x111111;
+					}
+
+					public final function rowNum(item:Object):String {
+						var i:int = outerDocument.dataProvider.getItemIndex(item) + 1;
+						return String(i);
+					}
+
+					public final function getName(item:Object):String {
+						return item.@name.toString();
+					}
+				]]></mx:Script>
+				<mx:Label text="{rowNum(data)}" width="30" textAlign="right" />
+				<mx:Label text="{getName(data)}" width="200" />
+			</mx:HBox>
+		</mx:Component>
+	</mx:itemRenderer>
+	<mx:Script><![CDATA[
+		import mx.managers.DragManager;
+		import mx.events.DragEvent;
+
+		private final function checkDragEvent(event:DragEvent):Boolean {
+			if (event.dragSource.hasFormat("items")) {
+				var items:Array = event.dragSource.dataForFormat('items') as Array;
+				return (typeof(items[0]) == "xml" && items[0].name() == "playlist");
+			}
+			return false;
+		}
+
+		override protected final function dragEnterHandler(event:DragEvent):void {
+			if (checkDragEvent(event)) {
+				super.dragEnterHandler(event);
+				return;
+			}
+			DragManager.showFeedback(DragManager.NONE);				
+		}
+
+		override protected final function dragDropHandler(event:DragEvent):void {
+			var pos:int = calculateDropIndex(event);
+			super.dragDropHandler(event);
+			scrollToIndex(pos);
+			if (event.action == DragManager.COPY) {
+				trace("playlist item copy");
+				var data:XML = dataProvider.getItemAt(pos);
+				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "pl");
+			}
+		}
+
+		//override protected final function dragCompleteHandler(event:DragEvent):void {
+		//	super.dragCompleteHandler(event);
+		//} 
+	]]></mx:Script>
+</mx:List>

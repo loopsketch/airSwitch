@@ -1,0 +1,1065 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:svvitch="*"
+	creationComplete="init()"
+	verticalScrollPolicy="off"
+	frameRate="30">
+	<mx:Style>
+		global{
+			modal-transparency: 0.8;
+			modal-transparency-blur: 0;
+			modal-transparency-color: #000000;
+			modal-transparency-duration: 0;
+		}
+
+		Application {
+			color: #cccccc;
+			fontSize: 13px;
+			background-color: #333333;
+			padding-top: 20;
+			padding-left: 4;
+			padding-bottom: 4;
+			padding-right: 4;
+		}
+
+		ApplicationControlBar {
+			font-weight: bold;
+		}
+
+		Panel {
+			color: #cccccc;
+			font-size: 13px;
+			background-color: #333333;
+			background-alpha: 0.8;
+			border-style: solid;
+			border-color: #999999;
+			border-thickness: 1;
+			border-thickness-left: 4;
+			border-thickness-right: 4;
+			border-alpha: 0.5;
+			title-style-name: "panelTitle";
+		}
+
+		.panelTitle {
+			font-weight: bold;
+		}
+
+		TitleWindow {
+			background-color: #333333;
+		}
+
+		Form {
+			padding-top: 0;
+			padding-left: 0;
+			padding-bottom: 0;
+			padding-right: 0;
+		}
+
+		TextInput {
+			border-style: none;
+			background-color: #111111;
+			background-alpha: 0.5;
+			color: #cccccc;
+		}
+
+		TextArea {
+			border-style: none;
+			background-color: #111111;
+			background-alpha: 0.5;
+			color: #cccccc;
+		}
+
+		.comboDropdown {
+			background-color: #333333;
+			background-alpha: 0.6;
+			color: #cccccc;
+		}
+
+		TabNavigator {
+			color: #cccccc;
+			background-color: #333333;
+			selected-tab-text-style-name: "selectedTab";
+		}
+
+		.selectedTab {
+		   text-roll-over-color: #ffffff;
+		}
+
+		List {
+			background-color: #000000;
+			background-alpha: 0.9;
+			border-color: #666666;
+			padding-right: 2;
+			dropIndicatorSkin: ClassReference("skins.ListDropIndicator");
+		}
+
+		VScrollBar {
+			color: #cccccc;
+			cornerRadius: 0;
+			border-color: #000000;
+			track-colors: #111111, #111111;
+			fill-colors: #333333, #333333;
+			fill-alphas: 1,1;
+			highlight-alphas: 0, 0;
+		}
+
+		HScrollBar {
+			cornerRadius: 0;
+		}
+
+		DataGrid {
+			background-color: #000000;
+			background-alpha: 0.9;
+			color: #cccccc;
+			header-colors: #555555, #222222;
+			alternating-item-colors: #161616, #111111;
+			border-color: #333333;
+			vertical-grid-line-color: #333333;
+			header-separator-skin: Embed(source="../images/transparent.png");
+		}
+
+		TileList {
+			background-color: #000000;
+			background-alpha: 0.9;
+			border-color: #666666;
+			padding-left: 2;
+			padding-right: 2;
+		}
+
+		Button {
+			color: #cccccc;
+			text-selected-color: #333333;
+		}
+
+		.btnTransitionSlide {
+			upSkin: Embed(source="../images/transition_slide.png");
+			overSkin: Embed(source="../images/transition_slide.png");
+			downSkin: Embed(source="../images/transition_slide.png");
+			disabledSkin: Embed(source="../images/transition_slide.png");
+		}
+		.btnTransitionDissolve {
+			upSkin: Embed(source="../images/transition_dissolve.png");
+			overSkin: Embed(source="../images/transition_dissolve.png");
+			downSkin: Embed(source="../images/transition_dissolve.png");
+			disabledSkin: Embed(source="../images/transition_dissolve.png");
+		}
+	</mx:Style>
+	<mx:Number id="selected">{getSelectedIndex(_displays)}</mx:Number><!-- radioButtonの選択行 -->
+	<mx:ApplicationControlBar id="titleBar" dock="true">
+		<mx:Image id="appLogo" source="{_logo}" width="32" height="32" />
+		<mx:Label id="appTitle" text="airSvvitch" width="100%" />
+		<mx:ToggleButtonBar id="navigation">
+			<mx:dataProvider>
+				<mx:String>ディスプレイ選択</mx:String>
+				<mx:String>操作する</mx:String>
+			</mx:dataProvider>
+		</mx:ToggleButtonBar>
+		<mx:Spacer width="100%"/>
+		<mx:Button id="closeButton" label="X" click="onClose();" />			
+	</mx:ApplicationControlBar>
+	<mx:ViewStack selectedIndex="{navigation.selectedIndex}" change="changeView(event)" width="100%" height="100%" creationPolicy="all">
+		<mx:VBox width="100%" height="100%" horizontalAlign="center">
+			<mx:Form id="displayConfigForm" width="1000">
+				<mx:FormItem label="ディスプレイ名" required="true" >
+					<mx:TextInput id="displayName" />
+				</mx:FormItem>
+				<mx:FormItem label="IPアドレス" required="true">
+					<mx:TextInput id="displayAddress" restrict="0-9." maxChars="15" />
+				</mx:FormItem>
+				<mx:FormItem label="説明" width="100%">
+					<mx:TextArea id="displayDescription" width="100%" />
+				</mx:FormItem>
+				<mx:HBox width="100%" horizontalAlign="right">
+					<mx:Button label="add" click="addDisplay();" />
+					<mx:Button label="delete" click="deleteDisplayItem();" />							
+				</mx:HBox>
+				<mx:DataGrid id="displayGrid" width="100%" height="300" dataProvider="{_displays.display}"
+					verticalScrollPolicy="on" sortableColumns="false"
+					editable="true" itemEditBeginning="onDisplayEditBeginning(event)">
+					<mx:columns>
+						<mx:Array>
+							<mx:DataGridColumn headerText="編集" width="50" dataField="edit" textAlign="center"
+								itemRenderer="RadioButtonRenderer" editorDataField="selected" rendererIsEditor="true" />
+							<mx:DataGridColumn headerText="出力" width="50" dataField="out"
+								itemRenderer="CheckBoxRenderer" editorDataField="selected" rendererIsEditor="true" />
+							<mx:DataGridColumn headerText="ディスプレイ名" width="120" dataField="name" />
+							<mx:DataGridColumn headerText="IPアドレス" width="120" dataField="address" />
+							<mx:DataGridColumn headerText="説明" dataField="description" />
+						</mx:Array>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:Form>
+		</mx:VBox>
+		<mx:HBox width="100%" height="100%">
+			<mx:VBox>
+				<mx:Canvas id="preview" backgroundColor="#000000" width="240" height="180">
+				</mx:Canvas>
+				<mx:HBox width="240" verticalAlign="middle">
+					<mx:HSlider id="luminance" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="{_luminance}" change="changeLuminance(event)" />
+					<mx:Image source="{_iconBrightness}" width="24" height="24" toolTip="輝度設定" />
+				</mx:HBox>
+				<mx:VBox width="240" backgroundColor="#000000" paddingLeft="1" verticalGap="1">
+					<mx:Label text="再生中コンテンツ:" color="#33cc33" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:Label text="{_currentPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
+					<mx:Label text="{_currentContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />									
+					<mx:Label text="残り時間 {_timeRemain}(概算)" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />						
+					<mx:Label text="次のコンテンツ:" color="#33cc33" paddingTop="8" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:Label text="{_nextPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
+					<mx:Label text="{_nextContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />
+					<mx:Label text="トランジション:" color="#33cc33" paddingTop="8" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:HBox horizontalGap="2">
+						<mx:Button id="transitionSlide" label="Sl" toggle="true" />
+						<mx:Button id="transitionDissolve" label="Di" toggle="true"/>
+					</mx:HBox>
+					<mx:Label text="遷移アクション:" color="#33cc33" paddingTop="8" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:HBox horizontalGap="2">
+						<mx:Button id="actionStop" label="St" toggle="true" />
+						<mx:Button id="actionStopPrepared" label="StP" toggle="true" />
+						<mx:Button id="actionWait" label="Wa" toggle="true"/>
+						<mx:Button id="actionJump" label="Ju" toggle="true"/>
+					</mx:HBox>
+					<mx:Label text="準備コンテンツ:" color="#33cc33" paddingTop="8" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:Label text="{_preparedPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
+					<mx:Label text="{_preparedContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />									
+				</mx:VBox>
+			</mx:VBox>
+			<mx:VBox>
+				<mx:TabNavigator id="sourceTab" backgroundColor="#333333" paddingBottom="0">
+					<mx:VBox label="プレイリスト" paddingLeft="4" paddingRight="4" paddingBottom="4">
+						<mx:HBox width="100%" verticalAlign="middle">
+							<mx:Image source="{_iconXmag}" width="16" height="16" toolTip="プレイリスト名で絞込み検索" />
+							<mx:TextInput id="findPlaylist" text="" width="120" change="filterPlaylist(event)" />								
+							<mx:Spacer width="100%"/>
+							<mx:Button id="addPlaylistButton" label="＋" click="addPlaylist(event)"  />
+							<mx:Button id="deletePlaylistButton" label="－" click="deletePlaylist(event)" />
+						</mx:HBox>
+						<svvitch:PlaylistSelector id="playlistSelector" dragEnabled="true"
+							dataProvider="{_workspace.playlists.playlist}" width="250" height="580"
+							change="changePlaylist(event)" />
+					</mx:VBox>
+					<mx:VBox id="mediaTab" label="メディア" paddingLeft="4" paddingRight="4" paddingBottom="4">
+						<mx:HBox width="100%" verticalAlign="middle">
+							<mx:Image source="{_iconXmag}" width="16" height="16" toolTip="メディア名で絞込み検索" />
+							<mx:TextInput id="findMedia" text="" width="120" change="filterMedia(event)" />								
+							<mx:Spacer width="100%"/>
+							<mx:Button id="addMediaButton" label="＋" click="addMedia(event)" />
+							<mx:Button id="deleteMediaButton" label="－" click="deleteMedia(event)" />
+						</mx:HBox>
+						<svvitch:MediaSelector id="mediaSelector" width="250" height="580" />								
+					</mx:VBox>
+				</mx:TabNavigator>
+			</mx:VBox>
+			<mx:VBox>
+				<mx:HBox width="100%">
+					<mx:Button id="editMode" click="toggleEditMode(event)" />
+					<mx:Spacer width="100%"/>
+					<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
+				</mx:HBox>
+				<mx:TabNavigator backgroundColor="#333333"  paddingBottom="0">
+					<mx:VBox width="100%" label="プレイリスト編成" paddingLeft="4" paddingRight="4" paddingBottom="4">
+						<mx:HBox width="100%">
+							<mx:ColorPicker id="colorPicker" editable="true" change="changeColor(event)" />
+							<mx:TextInput id="playlistName" text="" change="changePlaylistName(event)" width="300" />								
+							<mx:Spacer width="100%"/>
+							<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
+						</mx:HBox>
+						<mx:HBox width="100%">
+							<mx:TextArea id="playlistText" width="100%" height="80" />
+							<mx:VBox height="100%">
+								<mx:Spacer height="100%" />
+								<mx:Button id="textUpdateButton" label="TEXT" click="updatePlaylistText(event)" />	
+							</mx:VBox>
+						</mx:HBox>
+						<svvitch:PlaylistEditor id="playlistEditor"
+							dataProvider="{_playlist.item}" width="480" height="250"
+							change="selectContent(event)" />
+						<mx:HBox width="100%">
+							<mx:Spacer width="100%"/>
+							<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
+						</mx:HBox>
+					</mx:VBox>
+					<!-- mx:VBox width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
+						<mx:DateField />
+					</mx:VBox -->
+				</mx:TabNavigator>
+				<mx:Panel title="ショートカット" width="100%">
+					<svvitch:ShortcutList id="shortcutList"
+							dataProvider="{_workspace.shortcuts.item}" width="480" height="100" />
+					<mx:HBox width="100%">
+						<mx:Spacer width="100%"/>
+						<mx:Button id="deleteShortcutButton" label="－"  click="deleteShorcut(event)" />
+					</mx:HBox>
+				</mx:Panel>
+			</mx:VBox>
+		</mx:HBox>
+	</mx:ViewStack>
+	<mx:HRule width="100%" alpha="0.5" />
+	<mx:Label width="100%" text="copyright(c)2009-2010 www.loopsketch.com allrights reserved." textAlign="center" />
+	<!-- コード -->
+	<mx:Script><![CDATA[
+		import flash.display.Sprite;
+		import flash.events.Event;
+		import flash.events.IOErrorEvent;
+		import flash.events.MouseEvent;
+		import flash.events.TimerEvent;
+		import flash.net.URLLoader;  
+		import flash.net.URLRequest;  
+		import flash.net.URLVariables;
+		import flash.utils.getTimer;
+		import flash.utils.Timer;
+		import mx.controls.Image;
+		import mx.controls.Alert;
+		import mx.controls.Button;
+		import mx.events.CloseEvent;
+		import mx.events.DragEvent;
+		import mx.events.FlexEvent;
+		import mx.collections.ArrayCollection;
+		import mx.events.DataGridEvent;
+		import mx.core.IUIComponent;
+		import mx.core.IFlexDisplayObject;
+		import mx.managers.DragManager;
+		import mx.managers.PopUpManager;
+
+		import com.adobe.serialization.json.JSON;  
+
+		[Embed(source="../images/switch_logo.png")]
+        [Bindable] private var _logo:Class;
+
+		[Embed(source="../images/brightness.png")]
+        [Bindable] private var _iconBrightness:Class;
+
+		[Embed(source="../images/transition_slide.png")]
+        [Bindable] private var _iconTransitionSlide:Class;
+		[Embed(source="../images/transition_dissolve.png")]
+        [Bindable] private var _iconTransitionDissolve:Class;
+
+		[Embed(source="../images/Crystal_Clear_app_xmag.png")]
+        [Bindable] private var _iconXmag:Class;
+
+		[Embed(source="../images/decrypted.png")]
+        private var _unlockIcon:Class;
+		[Embed(source="../images/encrypted.png")]
+        private var _lockIcon:Class;
+
+		// (xp) C:\Documents and Settings\username\Application Data\appId\Local Store
+		// (vista) C:\Users\username\AppData\Roaming\appId\Local Store
+		private const DISPLAY_FILE:File = new File("app-storage:/displays.xml"); 
+
+		[Bindable] public var _displays:XML = <displays />;
+		[Bindable] public var _workspace:XML = <workspace />;
+		[Bindable] public var _playlist:XML = <playlist />;
+		[Bindable] public var _currentPlaylist:String = "";
+		[Bindable] public var _currentContent:String = "";
+		[Bindable] public var _timeRemain:String = "";
+		[Bindable] public var _nextPlaylist:String = "";
+		[Bindable] public var _nextContent:String = "";
+		[Bindable] public var _preparedPlaylist:String = "";
+		[Bindable] public var _preparedContent:String = "";
+		[Bindable] public var _luminance:int = 50;
+		private var _action:String;
+		private var _transition:String;
+
+		private var _oldDataGridEvent:DataGridEvent;
+
+		private var _previewTimer:Timer = null;
+		private var _statusTimer:Timer = null;
+
+		private var _editable:Boolean = false;
+		private var _uploader:UploadProgressBar;
+
+		private var _shadowFilter:DropShadowFilter;		
+
+		// 初期化
+		public final function init():void {
+			_shadowFilter = new DropShadowFilter();
+			_shadowFilter.color = 0x000000;
+			_shadowFilter.alpha = 0.4;
+			_shadowFilter.blurX = 5;
+			_shadowFilter.blurY = 5;
+			_shadowFilter.distance = 5;
+			addShadow(appLogo);
+			addShadow(appTitle);
+
+			titleBar.addEventListener(MouseEvent.MOUSE_DOWN, moveApplication);
+			// フルスクリーンの指定
+			// systemManager.stage.displayState = StageDisplayState.FULL_SCREEN_INTERACTIVE;
+
+			var temp:File = new File("app-storage:/temp/");
+			if (temp.exists) {
+				var files:Array = temp.getDirectoryListing();
+				for each(var file:* in files) {
+					if (file.isDirectory) {
+						file.deleteDirectory(true);
+					} else {
+						file.deleteFile();
+					}
+					trace("delete " + file.nativePath);
+				}				
+			}
+			initDisplayConfig();
+		}
+
+		private function addShadow(comp:DisplayObject):void {
+			comp.filters = [_shadowFilter];
+		}
+
+		private final function moveApplication(event:Event):void {
+			systemManager.stage.nativeWindow.startMove();
+		}
+
+		/** トグルボタンによるviewの変更 */
+		private final function changeView(event:Event):void {
+			trace('view: ' + navigation.selectedIndex);
+			switch (navigation.selectedIndex) {
+				case 0:
+					// ディスプレイ設定
+					initDisplayConfig();
+					break;
+				case 1:
+					// 操作
+					initPlayOperation();
+					break;
+			}
+		}
+
+		/** ディスプレイ設定の初期化 */
+		private final function initDisplayConfig():void {
+			stopPreview();
+			stopStatus();
+			if (_displays.display.length() == 0) {
+				var fs:FileStream = new FileStream();
+				try {
+					fs.open(DISPLAY_FILE, FileMode.READ);
+					var xml:String = fs.readUTFBytes(fs.bytesAvailable);
+					_displays = XML(xml);
+				} catch (error:Error) {
+					trace("<Error> " + error.message);
+				} finally {
+					fs.close();		
+				}
+				trace('load displays: ' + _displays.display.length());
+			}
+		}
+
+		/** 編集ディスプレイの取得 */
+		private final function getEditDisplay():XML {
+			if (_displays) {
+				for (var i:int = 0; i < _displays.display.length(); i++) {
+					if (_displays.display[i].edit == 'true') {
+						return _displays.display[i];
+					}
+				}
+			}
+			return null;
+		}
+
+		/** ディスプレイへのベースURL取得 */
+		private final function baseURL():String {
+			var address:String = "127.0.0.1";
+			var display:XML = getEditDisplay();
+			if (display) address = display.address.text();
+			return "http://" + address + ":9090";
+		}
+
+		/** DataGrid選択Index取得処理 */
+		private final function getSelectedIndex(displays:XML):int {
+			var len:int = displays.display.length();
+			for (var i:int = 0; i < len; i++) {
+				if (displays.display[i].edit == 'true') {
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		/** ディスプレイ追加 */
+		private final function addDisplay():void {
+			if (displayName.text.length == 0) {
+				Alert.show("ディスプレイ名を入力してください");
+				return;
+			}
+			if (displayAddress.text.length == 0) {
+				Alert.show("IPアドレスを入力してください");
+				return;
+			}
+			var display:XML = <display />;
+			display.edit = "false";
+			display.out = "false";
+			display.name = displayName.text;
+			display.address = displayAddress.text;
+			display.description = displayDescription.text;
+			_displays.appendChild(display);
+			trace('display: ' + _displays.display.length);
+		}
+
+		/** 削除処理 */
+		private final function deleteDisplayItem():void {
+			var i:int = displayGrid.selectedIndex;
+			if (i != -1) {
+				var item:Object = displayGrid.selectedItem;
+				Alert.show("ディスプレイ[" + item.name + "]を削除してよろしいですか？","アラート", Alert.YES | Alert.NO, this, deleteAlertClicked);
+			}
+		}
+
+		/** 削除処理 */
+		private final function deleteAlertClicked(event:CloseEvent):void {
+			if (event.detail == Alert.YES) {
+				var i:int = displayGrid.selectedIndex;
+				if (i != -1) {
+					trace("delete display: " + i);
+					displayGrid.dataProvider.removeItemAt(i);
+				}
+			}
+		}
+
+		/** ディスプレイ情報保存 */
+		private final function saveDisplay():void {
+			trace('save displays');
+			SwitchUtils.saveXML(_displays, DISPLAY_FILE);
+		}
+
+		/** 編集開始 */
+		private final function onDisplayEditBeginning(event:DataGridEvent):void {
+			if (!validateDoubleClick(event)) {
+				// シングルクリックの場合はイベントをキャンセル
+				event.preventDefault();
+			}
+		}
+
+		/** ダブルクリックか否かを判定します */
+		private final function validateDoubleClick(event:DataGridEvent):Boolean {
+			var result:Boolean = (
+				_oldDataGridEvent != null && 
+				event.columnIndex == _oldDataGridEvent.columnIndex &&
+				event.rowIndex == _oldDataGridEvent.rowIndex
+			);
+
+			_oldDataGridEvent = (result)? null: event;
+			return result;
+		}
+
+
+		/** 操作画面初期化 */
+		private final function initPlayOperation():void {
+			_editable = true;
+			toggleEditMode(null);
+			_workspace = <workspace />;
+			unselectPlaylist();
+			var loader:URLLoader = new URLLoader();
+			var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
+			request.useCache = false;
+			loader.load(request);
+			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				_workspace = new XML(event.target.data);
+				var display:XML = getEditDisplay();
+				mediaSelector.setData(display.address.text(), _workspace.medialist.item);
+				playlistEditor.setData(_workspace);
+				shortcutList.setData(_workspace, baseURL());
+				startPreview(); // 繋がった場合、プレビューの開始
+				startStatus();
+			});
+			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+				trace(event);
+				Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
+			});
+		}
+
+		/** プレビューの開始 */
+		private final function startPreview():void {
+			if (!_previewTimer) {
+				_previewTimer = new Timer(2000, 0);
+				_previewTimer.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+					var loader:Loader = new Loader();
+					with (loader.contentLoaderInfo) {
+						addEventListener(Event.COMPLETE, updatePreviewImage);
+						addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+							trace('remote display no result');
+							event.target.loader.unload();
+						});
+					}
+					var request:URLRequest = new URLRequest(baseURL() + "/get/snapshot");
+					request.useCache = false;
+					loader.load(request);
+				});
+				_previewTimer.start();
+			} else {
+				_previewTimer.start();		
+			}
+		}
+
+		/** プレビュー画像の更新 */
+		private final function updatePreviewImage(event:Event):void {
+			var image:Image = new Image();
+			image.width = 240;
+			image.height = 180;
+			image.setStyle("horizontalAlign", "center");
+			image.setStyle("verticalAlign", "center");
+			image.setStyle("removedEffect", "Fade");			
+			image.load(event.target.content); // イメージの更新
+			preview.addChildAt(image, 0);
+			event.target.loader.unload();
+			if (preview.getChildren().length >= 2) {
+				preview.removeChildAt(1);
+			}
+		}
+
+		/** プレビューの停止 */
+		private final function stopPreview():void {
+			if (_previewTimer) {
+				_previewTimer.stop();
+			}
+		}
+
+		/** ステータスモニタの開始 */
+		private final function startStatus():void {
+			if (!_statusTimer) {
+				_statusTimer = new Timer(500, 0);
+				_statusTimer.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+					var loader:URLLoader = new URLLoader();
+					loader.addEventListener(Event.COMPLETE, updateStatus);
+					loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+						trace('remote display no result');
+					});
+					var request:URLRequest = new URLRequest(baseURL() + "/get/status");
+					request.useCache = false;
+					loader.load(request);
+				});
+				_statusTimer.start();
+			} else {
+				_statusTimer.start();
+			}
+		}
+
+		/** ステータスの更新 */
+		private final function updateStatus(event:Event):void {
+			var loader:URLLoader = URLLoader(event.currentTarget);
+			var json:String = loader.data;
+			try {
+				var status:Object = JSON.decode(json);
+				_currentPlaylist = status['current-playlist'];
+				_currentContent = status['current-content'];
+				_timeRemain = status['time_remain'];
+				if (status['next-playlist'] != _currentPlaylist) {
+					_nextPlaylist = status['next-playlist'];
+				} else {
+					_nextPlaylist = "";
+				}
+				_nextContent = status['next-content'];
+				_preparedPlaylist = status['prepared-playlist'];
+				_preparedContent = status['prepared-content'];
+				if (status['luminance']) _luminance = status['luminance'];
+				if (_action != status['action']) {
+					_action = status['action'];
+					if (_action == 'stop') {
+						actionStop.selected = true;
+						actionStopPrepared.selected = false;
+						actionWait.selected = false;
+						actionJump.selected = false;
+					} else if (_action == 'stop-prepared') {
+						actionStop.selected = false;
+						actionStopPrepared.selected = true;
+						actionWait.selected = false;
+						actionJump.selected = false;
+					} else if (_action.indexOf("wait") != -1) {
+						actionStop.selected = false;
+						actionStopPrepared.selected = false;
+						actionWait.selected = true;
+						actionJump.selected = false;
+					} else if (_action.indexOf("jump") != -1) {
+						actionStop.selected = false;
+						actionStopPrepared.selected = false;
+						actionWait.selected = false;
+						actionJump.selected = true;
+					} else {
+						actionStop.selected = false;
+						actionStopPrepared.selected = false;
+						actionWait.selected = false;
+						actionJump.selected = false;					
+					}
+				}
+				if (_transition != status['transition']) {
+					_transition = status['transition'];
+					if (_transition == 'slide') {
+						transitionSlide.selected = true;
+						transitionDissolve.selected = false;
+					} else if (_transition == 'dissolve') {
+						transitionSlide.selected = false;
+						transitionDissolve.selected = true;
+					} else {
+						transitionSlide.selected = false;
+						transitionDissolve.selected = false;
+					}
+				}
+				if (status['set-text']) {
+					var data:Array = status['set-text'].split(":", 2);
+					var playlists:XMLList = _workspace.playlists.playlist.(@id == data[0]);
+					for (var i:int = 0; i < playlists.length(); i++) {
+						playlists[i].@text = data[1];
+						trace(playlists[i].toXMLString());
+					}
+				}
+				swButton.enabled = (_preparedContent != null && _preparedContent.length > 0) || (_nextContent != null && _nextContent.length > 0);
+			} catch (error:Error) {
+				trace(error.message + ":" + json);
+			}
+		}
+
+		/** ステータスモニタの停止 */
+		private final function stopStatus():void {
+			if (_statusTimer) {
+				_statusTimer.stop();
+			}
+		}
+
+		/** 輝度変更 */
+		private final function changeLuminance(event:Event):void {
+			var request:URLRequest = new URLRequest(baseURL() + "/set/luminance");
+			request.method = URLRequestMethod.POST;
+			var params:URLVariables = new URLVariables();
+			params.v = luminance.value;
+			request.data = params;
+			sendToURL(request);
+			trace("kido: " + luminance.value);
+		}
+
+		/** 編集モード変更 */
+		private final function toggleEditMode(event:Event):void {
+			_editable = !_editable;
+			if (_editable) {
+				editMode.setStyle("icon", _unlockIcon);
+				//editMode.label = "○";
+				//swButton.enabled = false;
+				mediaTab.enabled = true;
+				saveButton.visible = true;
+				addPlaylistButton.enabled = true;
+				deletePlaylistButton.enabled = true;
+				addMediaButton.enabled = true;
+				deleteMediaButton.enabled = true;
+				//playlistSelector.dragEnabled = true;
+				playlistSelector.dropEnabled = true; 
+				mediaSelector.dragEnabled = true;
+				colorPicker.enabled = true;
+				playlistName.editable = true;
+				playlistEditor.dragEnabled = true;
+				deletePlaylistItemButton.enabled = true;
+
+			} else {
+				editMode.setStyle("icon", _lockIcon);
+				// editMode.label = "×";
+				//swButton.enabled = true;
+				sourceTab.selectedIndex = 0;
+				mediaTab.enabled = false;
+				saveButton.visible = false;
+				addPlaylistButton.enabled = false;
+				deletePlaylistButton.enabled = false;
+				addMediaButton.enabled = false;
+				deleteMediaButton.enabled = false;
+				//playlistSelector.dragEnabled = false;
+				playlistSelector.dropEnabled = false; 
+				mediaSelector.dragEnabled = false;
+				colorPicker.enabled = false;
+				playlistName.editable = false;
+				playlistEditor.dragEnabled = false;
+				deletePlaylistItemButton.enabled = false;
+			}
+		}
+
+		/** プレイリスト変更 */
+		private final function changePlaylist(event:Event):void {
+			//trace("change playlist");
+			_playlist = playlistSelector.selectedItem as XML;
+			if (_playlist.@color) {
+				colorPicker.selectedColor = parseInt(_playlist.@color.toString(), 16);
+			} else {
+				colorPicker.selectedColor = 0x111111;		
+			}
+			playlistName.text = _playlist.@name.toString();
+			playlistName.horizontalScrollPosition = 0;
+			if (_playlist.@text) {
+				playlistText.text = _playlist.@text.toString();
+			} else {
+				playlistText.text = "";
+			}
+			//textUpdateButton.visible = false;
+			selectContent(event);
+		}
+
+		/** コンテンツ選択 */
+		private final function selectContent(event:Event):void {
+			// trace("select content");
+			if (!_editable) {
+				var request:URLRequest = new URLRequest(baseURL() + "/set/playlist");
+				request.method = URLRequestMethod.POST;
+				var params:URLVariables = new URLVariables();
+				params.pl = _playlist.@id.toString();
+				var i:int = playlistEditor.selectedIndex;
+				params.i = (i == -1)?0:i;
+				request.data = params;
+				sendToURL(request);
+				trace("set playlist: " + params.pl + "-" + params.i);				
+			}
+		}
+
+		/** プレイリストの選択解除 */
+		private final function unselectPlaylist():void {
+			_playlist = <playlist />;
+			colorPicker.selectedColor = 0x111111;		
+			playlistName.text = "";
+		}
+
+		/** プレイリスト追加 */
+		private final function addPlaylist(event:Event):void {
+			var list:XML = <playlist name="新しいプレイリスト" />
+			list.@id = SwitchUtils.createNewID(_workspace.playlists.playlist, "pl");
+			playlistSelector.dataProvider.addItem(list);
+		}
+
+		/** プレイリスト削除 */
+		private final function deletePlaylist(event:Event):void {
+			var i:int = playlistSelector.selectedIndex;
+			if (i != -1) {
+				playlistSelector.dataProvider.removeItemAt(i);
+				if (i > 0) playlistSelector.scrollToIndex(i - 1);
+				unselectPlaylist();
+			}
+		}
+
+		/** プレイリスト名変更 */
+		private final function changePlaylistName(event:Event):void {
+			if (_editable && _playlist) {
+				_playlist.@name = playlistName.text;
+			}
+		}
+
+		/** プレイリストカラー変更 */
+		private final function changeColor(event:Event):void {
+			if (_editable && _playlist) {
+				_playlist.@color = colorPicker.selectedColor.toString(16);
+			}
+		}
+
+		/** プレイリストテキスト更新 */
+		private final function updatePlaylistText(event:Event):void {
+			trace("update playlist text");
+			_playlist.@text = playlistText.text;
+
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				var loader:URLLoader = URLLoader(event.currentTarget);
+				var json:String = loader.data;
+				try {
+					var result:Object = JSON.decode(json);
+					if (result.text != null) {
+						trace("text: " + result.text);
+						selectContent(null);
+					} else {
+						Alert.show("not set playlist text!");						
+					}
+				} catch (error:Error) {
+					trace(error.message + ":" + json);
+				}
+			});
+			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+				trace('remote display no result');
+			});
+
+			var request:URLRequest = new URLRequest(baseURL() + "/set/text");
+			request.method = URLRequestMethod.POST;
+			var params:URLVariables = new URLVariables();
+			params.pl = _playlist.@id.toString();
+			params.t = playlistText.text;
+			request.data = params;
+			loader.load(request);
+		}
+
+		/** プレイリストアイテムの削除 */
+		private final function deletePlaylistItem(event:Event):void {
+			var i:int = playlistEditor.selectedIndex;
+			if (i != -1) {
+				if (i > 0) {
+					playlistEditor.selectedIndex = i - 1;
+				}
+				playlistEditor.dataProvider.removeItemAt(i);
+				if (i > 0) playlistEditor.scrollToIndex(i - 1);
+			}
+		}
+
+		/** プレイリストのフィルタリング */
+		private final function filterPlaylist(event:Event):void {
+			trace("filter: " + findPlaylist.text);
+			if (findPlaylist.text.length > 0) {
+				var pattern:RegExp = new RegExp(findPlaylist.text, "i");
+				playlistSelector.dataProvider.filterFunction = function(item:Object):Boolean {
+					return pattern.test(item.@name.toString());
+				}				
+			} else {
+				playlistSelector.dataProvider.filterFunction = null;
+			}
+			playlistSelector.dataProvider.refresh();
+		}
+
+		/** メディア追加 */
+		private final function addMedia(event:Event):void {
+			var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
+			var editor:MediaEditor = popup as MediaEditor;
+			editor.selector = mediaSelector;
+			editor.workspace = _workspace;
+			PopUpManager.centerPopUp(editor);
+		}
+
+		/** メディア削除 */
+		private final function deleteMedia(event:Event):void {
+			var i:int = mediaSelector.selectedIndex;
+			if (i != -1) {
+				var item:XML = mediaSelector.dataProvider.getItemAt(i);
+				var xml:XMLList = _workspace.playlists.playlist.item.(text() == item.@id);
+				if (xml.length() > 0) {
+					Alert.show("プレイリストから削除してからでないと削除できません.");
+					return;
+				}
+				var child:XMLList = item.children();
+				for (var j:int = 0; j < child.length(); j++) {
+					if (child[j].name() == "movie" || child[j].name() == "image") {
+						if (!mediaSelector.removeUploadFile(child[j].text())) {
+							// アップロードファイルに無い場合は、削除指定をしておく
+							var data:XML = <file />;
+							data.@date = SwitchUtils.formatDate(new Date());
+							data.setChildren(child[j].text());
+							if (_workspace.deletes.length() == 0) {
+								_workspace.appendChild(<deletes />);
+							}
+							_workspace.deletes.appendChild(data);
+						}
+					}
+				}
+				mediaSelector.dataProvider.removeItemAt(i);
+				if (i > 0) mediaSelector.scrollToIndex(i - 1);
+			}
+		}
+
+		/** メディアのフィルタリング */
+		private final function filterMedia(event:Event):void {
+			trace("filter: " + findMedia.text);
+			if (findMedia.text.length > 0) {
+				var pattern:RegExp = new RegExp(findMedia.text, "i");
+				mediaSelector.dataProvider.filterFunction = function(item:Object):Boolean {
+					return pattern.test(item.@name.toString());
+				}				
+			} else {
+				mediaSelector.dataProvider.filterFunction = null;
+			}
+			mediaSelector.dataProvider.refresh();
+		}
+
+		/** 切替 */
+		private final function switchContent(event:Event):void {
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				var loader:URLLoader = URLLoader(event.currentTarget);
+				var json:String = loader.data;
+				try {
+					var result:Object = JSON.decode(json);
+					if (!result.switched) {
+						Alert.show("not switched!");
+					} else {
+						var sl:Loader = new Loader();
+						with (sl.contentLoaderInfo) {
+							addEventListener(Event.COMPLETE, updatePreviewImage);
+							addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+								trace('remote display no result');
+								event.target.loader.unload();
+							});
+						}
+						var request:URLRequest = new URLRequest(baseURL() + "/get/snapshot");
+						request.useCache = false;
+						sl.load(request);
+					}
+				} catch (error:Error) {
+					trace(error.message + ":" + json);
+				}
+			});
+			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+				trace('remote display no result');
+			});
+			swButton.enabled = false;
+			loader.load(new URLRequest(baseURL() + "/switch"));
+		}
+
+
+		/** ショートカットの削除 */
+		private final function deleteShorcut(event:Event):void {
+			var i:int = shortcutList.selectedIndex;
+			if (i != -1) {
+				if (i > 0) {
+					shortcutList.selectedIndex = i - 1;
+				}
+				shortcutList.dataProvider.removeItemAt(i);
+			}
+		}
+
+
+		/** ワークスペースの保存 */
+		private final function saveWorkspace(event:Event):void {
+			var workspace:File = new File("app-storage:/datas/workspace.xml");
+			var fs:FileStream = new FileStream();
+			try {
+				fs.open(workspace, FileMode.WRITE);
+				var s:String = '<?xml version="1.0" encoding="UTF-8" ?>\n'; 
+				s += _workspace.toXMLString();
+				fs.writeUTFBytes(s);
+			} catch (error:Error) {
+				trace("<Error> " + error.message);
+			} finally {
+				fs.close();		
+			}
+
+			var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, UploadProgressBar, true);
+			PopUpManager.centerPopUp(popup);
+			_uploader = popup as UploadProgressBar;
+
+			var files:Object = mediaSelector.getUploadFiles();
+			for (var file:String in files) {
+				_uploader.addFile(file, files[file]);
+			}
+			_uploader.addFile(workspace.name, workspace);
+			_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+					trace("update complete");
+					var loader:URLLoader = URLLoader(event.currentTarget);
+					var json:String = loader.data;
+					try {
+						var result:Object = JSON.decode(json);
+						if (!result.update) {
+							_uploader.setMessage("更新に失敗しました");
+//							Alert.show("not updated!");
+						} else {
+							mediaSelector.clearUploadFiles();
+							PopUpManager.removePopUp(_uploader);
+							_uploader = null;
+						}
+					} catch (error:Error) {
+						trace(error.message + ":" + json);
+					}
+				});
+				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+					trace('remote display no result');
+				});
+				loader.load(new URLRequest(baseURL() + "/update"));
+			});
+			_uploader.startUpload(baseURL());
+		}
+
+		/** 閉じる */
+		private final function onClose():void {
+			saveDisplay();
+			stage.nativeWindow.close();
+		}
+	]]></mx:Script>
+</mx:Application>

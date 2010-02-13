@@ -1,0 +1,206 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	title="メディア編集" showCloseButton="false"
+	width="600" close="{onClose()}" creationComplete="init()">
+	<mx:HRule width="100%" alpha="0.2" />
+	<mx:Form id="displayConfigForm" width="100%" height="100%">
+		<mx:FormItem label="メディア名" required="true" >
+			<mx:TextInput id="mediaName" text="" />
+		</mx:FormItem>
+		<mx:FormItem label="再生時間" >
+			<mx:HBox>
+				<mx:TextInput id="duration" text="" />
+				<mx:Label text="ミリ秒" />				
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="テンプレート">
+			<mx:ComboBox id="template" labelField="@name" change="changeTemplate()" />
+		</mx:FormItem>
+	</mx:Form>
+	<mx:StringValidator source="{mediaName}" property="text" minLength="1"
+		requiredFieldError="メディア名が入力されていません"
+		tooShortError="メディア名が入力されていません" />
+	<mx:List id="mediaItemList" width="100%"
+		dataProvider="{_item.children()}" dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
+		<mx:itemRenderer>
+			<mx:Component>
+				<mx:HBox backgroundColor="#111111" horizontalScrollPolicy="off" doubleClickEnabled="true" doubleClick="edit(event)">
+					<mx:Script><![CDATA[
+						import flash.events.Event;
+						import flash.net.FileFilter;
+						import flash.net.FileReference;
+
+						import mx.controls.Alert;
+
+						/** 編集 */
+						private function edit(event:Event):void {
+							var filter:FileFilter;
+							var name:String = outerDocument.mediaItemList.selectedItem.name();
+							if (name == "image") {
+								filter = new FileFilter("静止画ファイル(.jpg/.png/.bmp)", "*.jpg;*.png;*.bmp");
+								browseFile(filter);
+							} else if (name == "movie") {
+								filter = new FileFilter("動画ファイル(.mp4/.mpg/.mov/.wmv/.avi)", "*.mp4;*.mpg;*.mov;*.wmv;*.avi");
+								browseFile(filter);
+							} else if (name == "text") {
+								
+							} 
+						}
+
+						/** ファイルブラウザ */
+						private function browseFile(filter:FileFilter):void {
+							var file:File = new File();
+							var allFilter:FileFilter = new FileFilter("全て", "*.*");
+							file.addEventListener(Event.SELECT, function(event:Event):void {
+								var item:XML = outerDocument.mediaItemList.selectedItem as XML;
+								var file:File = event.target as File;
+								var useFile:Boolean = false;
+								if (item.name() == "image" && SwitchUtils.checkImageFileExt(file.name)) {
+									useFile = true;
+								} else if (item.name() == "movie" && SwitchUtils.checkMovieFileExt(file.name)) {
+									useFile = true;
+								} else {
+									Alert.show("[" + file.name + "]はこのテンプレートに設定できません");
+								}
+								var items:XMLList = outerDocument.workspace.medialist.item;
+								var datas:XMLList = items.image.(text() == "switch-data:/media/" + file.name);
+								datas += items.movie.(text() == "switch-data:/media/" + file.name);
+								if (datas.length() > 0) {
+									Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
+									useFile = false;
+								}
+								if (useFile) {
+									var key:String = item.text();
+									if (key.indexOf("%%") == 0) {
+										for each (var data:XML in outerDocument.mediaItemList.dataProvider) {
+											if (data.text() == key) {
+												data.setChildren("switch-data:/media/" + file.name);
+											}
+										}
+									} else {
+										var old:String = item.text();
+										var child:XMLList = outerDocument._item.children();
+										var used:int = 0;
+										for (var i:int = 0; i < child.length(); i++ ) {
+											if (child[i].text() == old) used++;
+										}
+										if (used == 0 || (used == 1 && item.text() == old)) {
+											outerDocument.selector.removeUploadFile(old);
+										}
+										item.setChildren("switch-data:/media/" + file.name);
+									}
+									outerDocument.selector.addUploadFile("/media/" + file.name, file);
+									trace("selected: " + file.name);									
+								}
+							});
+							file.browse([filter, allFilter]);
+						}
+
+						/** 順番 */
+						public function rowNum(item:Object):String {
+							var i:int = outerDocument.mediaItemList.dataProvider.getItemIndex(item) + 1;
+							return String(i);
+						}
+
+						/** アイテムタイプ */
+						public function getType(item:Object):String {
+							switch (item.name().toString()) {
+								case "image":
+									return "静止画";
+								case "movie":
+									return "動画";
+								case "text":
+									return "テキスト";
+							}
+							return item.name().toString();
+						}
+
+						/** アイテムファイル */
+						public function getFile(item:Object):String {
+							return item.toString();
+						}
+					]]></mx:Script>
+					<mx:Label text="{rowNum(data)}" width="25" textAlign="right" />
+					<mx:Label text="{getType(data)}" width="50" textAlign="center" />
+					<mx:Label text="{getFile(data)}" />
+				</mx:HBox>
+			</mx:Component>
+		</mx:itemRenderer>
+	</mx:List>
+	<mx:HBox id="bar" width="100%" horizontalAlign="center">
+		<mx:Button id="regist" label="登録" click="onRegist()" />
+		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
+	</mx:HBox>
+	<mx:Script><![CDATA[
+		import mx.managers.PopUpManager;
+
+		public var workspace:XML;
+		public var selector:MediaSelector;
+		public var baseItem:XML = null;
+
+		[Bindable]
+		public var _item:XML;
+
+		private final function init():void {
+			if (baseItem) {
+				_item = new XML(baseItem);
+			} else {
+				template.dataProvider.addItem(<item />);
+				for each (var item:XML in workspace.templates.item) {
+					template.dataProvider.addItem(new XML(item));
+				}
+				template.selectedIndex = 0;
+				_item = <item name="新しいメディア" />;
+			}
+			if (_item.children().length() > 0) {
+				template.enabled = false;
+			}
+			mediaName.text = _item.@name;
+			duration.text = _item.@duration;
+		}
+
+		/** テンプレートの変更 */
+		private final function changeTemplate():void {
+			trace("template change" );
+//			_item.setChildren(template.selectedItem.children());
+			mediaItemList.dataProvider.removeAll();
+			var sel:XML = template.selectedItem as XML;
+			_item.@type = sel.@type;
+			duration.text = sel.@duration;
+			_item.@template = sel.@id;
+			for each (var item:XML in sel.children()) {
+				mediaItemList.dataProvider.addItem(new XML(item));
+			}
+		}
+
+		/** 登録処理 */
+		private final function onRegist():void {
+			if (!_item.hasOwnProperty("@id")) {
+				// 新規登録
+				_item.@id = SwitchUtils.createNewID(workspace.medialist.item, "m");
+				_item.@name = mediaName.text;
+				_item.@duration = duration.text;
+				selector.dataProvider.addItem(_item);
+				trace("add item: " + _item.toXMLString());
+			} else {
+				// 修正
+				baseItem.@name = mediaName.text;
+				baseItem.@duration = duration.text;
+				baseItem.setChildren(_item.children());
+				trace("edit item: " + baseItem.toXMLString());
+			}
+			onClose();
+		}
+
+		/** クローズ処理 */
+		private final function onClose():void {
+			var child:XMLList = _item.children();
+			for (var i:int = 0; i < child.length(); i++ ) {
+				if (child[i].text().indexOf("%%") != 0) {
+					selector.removeUploadFile(child[i].text());
+				}
+			}
+			PopUpManager.removePopUp(this);
+		}
+	]]></mx:Script>
+</mx:TitleWindow>

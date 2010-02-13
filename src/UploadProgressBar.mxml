@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	title="ファイル更新" showCloseButton="false"
+	width="400" height="150" close="{onClose()}" creationComplete="init()">
+	<mx:HRule width="100%" alpha="0.2" />
+	<mx:VBox width="100%">
+		<mx:Label id="message" />
+		<mx:ProgressBar id="progress" width="100%" label="" />
+	</mx:VBox>
+	<mx:HBox id="bar" width="100%" horizontalAlign="center">
+		<mx:Button id="pb_close" label="閉じる" click="{onClose()}" />
+	</mx:HBox>
+	<mx:Script><![CDATA[
+		import flash.net.URLRequest;
+		import mx.controls.Alert;
+		import mx.controls.ProgressBarMode;
+		import mx.managers.PopUpManager;
+
+		import com.adobe.serialization.json.JSON;  
+
+		private var _current:int = 0;
+		private var _paths:Array = [];
+		private var _files:Array = [];
+		private var _baseURL:String;
+
+		private final function init():void {
+			progress.mode = ProgressBarMode.MANUAL;
+			progress.setProgress(0, 100);
+			pb_close.enabled = false;
+		}
+
+		public final function addFile(path:String, file:File):void {
+			_paths.push(path);
+			_files.push(file);
+		}
+
+		public final function startUpload(baseURL:String):void {
+			_baseURL = baseURL;
+			_current = 0;
+			upload();
+		}
+
+		public final function setMessage(text:String):void {
+			message.text = text;
+		}
+
+		private final function upload():void {
+			if (_paths.length > _current) {
+				message.text = "アップロード: " + _paths[_current];
+				var request:URLRequest = new URLRequest(_baseURL + "/upload");
+				request.method = URLRequestMethod.POST;
+				var variables:URLVariables = new URLVariables();
+				variables["path"] = _paths[_current];
+				request.data = variables;
+				_files[_current].addEventListener(Event.COMPLETE, function(event:Event):void {
+					trace("upload complete event");
+				});
+				_files[_current].addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, function(event:DataEvent):void {
+					var json:String = event.data;
+					try {
+						var result:Object = JSON.decode(json);
+						if (result.upload) {
+							trace("upload complete: " + event.target.name);
+							_current++;
+							progress.setProgress(100 * _current / _paths.length, 100);
+							upload();
+							return;
+						} else {
+							trace("feedback failed upload");
+						}
+					} catch (error:Error) {
+						trace(error.message + ":" + json);
+					}
+					message.text = "[" + _files[_current].name + "]をアップロード中に異常が発生しました";
+					pb_close.enabled = true;
+				});
+				_files[_current].addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+					trace(event);
+					message.text = "[" + _files[_current].name + "]をアップロード中に異常が発生しました";
+					pb_close.enabled = true;
+				});
+				_files[_current].addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
+					var p:int = (100 / _paths.length) * event.bytesLoaded / event.bytesTotal;
+					progress.setProgress(100 * _current / _paths.length + p, 100);
+				});
+				_files[_current].upload(request, "file");
+			} else {
+				progress.setProgress(100, 100);
+				message.text = "アップロードが完了しました";
+				pb_close.enabled = true;
+				dispatchEvent(new Event(Event.COMPLETE));
+			}
+		}
+
+		/** クローズ処理 */
+		private final function onClose():void {
+			PopUpManager.removePopUp(this);
+		}
+	]]></mx:Script>
+</mx:TitleWindow>

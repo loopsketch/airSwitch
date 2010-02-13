@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	title="メディアプレビュー" showCloseButton="true"
+	width="800" height="600" close="{onClose()}" creationComplete="init()">
+		<mx:Script><![CDATA[
+			import flash.events.NetStatusEvent;
+			import flash.media.Video;
+			import flash.net.NetConnection;
+			import flash.net.NetStream;
+			import mx.core.UIComponent;
+			import mx.managers.PopUpManager;
+
+			public var baseURL:String;
+			public var item:XML = null;
+
+			private var _component:UIComponent = new UIComponent();
+			private var _video:Video;
+			private var _connection:NetConnection;
+			private var _stream:NetStream;
+
+			private final function init():void {
+				_video = new Video(640, 360);
+				_component.addChild(_video);
+				preview.addChild(_component);
+				_component.width = _video.width;
+				_component.height = _video.height;
+
+				_connection = new NetConnection();
+				_connection.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+				_connection.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+				_connection.connect(null);
+			}
+
+			private final function initVideo():void {
+				trace("init video");
+				_stream = new NetStream(_connection);
+				_stream.addEventListener(NetStatusEvent.NET_STATUS, netStatusHandler);
+				_stream.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHnadler);
+				_stream.client = {};
+				_video.attachNetStream(_stream);
+				var path:String = item.children()[0].text();
+				// trace("preview: " + path);
+				if (path.indexOf("switch-data:/") == 0) {
+					path = "app-storage:/datas/" + path.substr(13);
+					trace("preview: " + path);
+				}
+				_stream.play(path);
+			}
+
+			private final function download():void {
+				var path:String = item.children()[0].text();
+				if (path.indexOf("switch-data:/") == 0) {
+					path = path.substr(13);
+				}
+				var loader:URLLoader = new URLLoader();
+				var request:URLRequest = new URLRequest(baseURL + "/download?path=" + path);
+				request.useCache = false;
+				loader.dataFormat = URLLoaderDataFormat.BINARY;
+				loader.load(request);
+				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+					try {
+						var file:File = new File("app-storage:/datas/" + path);
+						var stream:FileStream = new FileStream();
+						var byteArr:ByteArray = new ByteArray();
+						stream.open(file, FileMode.WRITE);
+						stream.writeBytes(URLLoader(event.currentTarget).data);
+						stream.close();
+						trace("saved: " + file.url);
+						_stream.play(file.url);
+					} catch (error:Error) {
+						trace("<Error> " + error.message);
+					} 
+				});
+				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+					trace(event);
+					// Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
+				});
+			}
+
+			private final function netStatusHandler(event:NetStatusEvent):void {
+				switch (event.info.code) {
+					case "NetConnection.Connect.Success":
+						initVideo();
+						break;
+					case "NetStream.Play.Start":
+						trace("start");
+						break;
+					case "NetStream.Play.Stop":
+						trace("stop");
+						break;
+					case "NetStream.Buffer.Flush":
+						trace("flush");
+						break;
+					case "NetStream.Buffer.Empty":
+						trace("empty");
+						break;
+					case "NetStream.Play.StreamNotFound":
+						trace("stream not found: " + _connection.uri);						
+						download();
+						break;
+					case "NetStream.Buffer.Full":
+						trace("buffer full");
+						break;
+					default:
+						trace('event: ' + event.info.code);
+				}
+			}
+
+			private final function asyncErrorHnadler(event:AsyncErrorEvent):void {
+				trace('async error: ' + event.toString());
+			}
+
+			private final function securityErrorHandler(event:SecurityErrorEvent):void {
+				trace('security error: ' + event.toString());
+			}
+
+			/** クローズ処理 */
+			private final function onClose():void {
+				_stream.close();
+				_connection.close();
+				preview.removeChild(_component);
+				PopUpManager.removePopUp(this);
+			}
+		]]></mx:Script>
+	<mx:VBox id="preview" width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" />
+	<mx:HBox id="bar" width="100%" horizontalAlign="center">
+		<mx:Button label="再生" click="{_stream.togglePause()}" />
+		<mx:Button label="閉じる" click="{onClose()}" />
+	</mx:HBox>
+</mx:TitleWindow>

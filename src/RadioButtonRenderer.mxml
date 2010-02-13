@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:RadioButton xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="100%" height="100%" groupName="rbtnGroup{_count++}" dataChange="onDataChange()">
+	<mx:Script><![CDATA[
+		import mx.collections.IList;
+		import mx.controls.DataGrid;
+		import mx.controls.dataGridClasses.DataGridListData;
+
+		private static var _count:int = 0;
+
+		/**
+		 * DataChange イベント
+		 */
+		private final function onDataChange():void {
+			var dataField:String = DataGridListData(listData).dataField;
+			var o:Object = data[dataField];
+			var v:String = "";
+			if (o is Boolean || o is XMLList) {
+				v = o.toString();
+			} else {
+				v = o as String;
+			}
+			// data内をチェック
+			if (v == "true") {
+				//ラジオボタンを選択状態
+				selected = true;
+			} else {
+				//ラジオボタンを未選択状態
+				selected = false;
+			}
+			// trace("radio: " + v + "/" + selected);
+		}
+
+		/**
+		 * ラジオボタン クリックイベント(Override)
+		 */
+		override protected final function clickHandler(event:MouseEvent):void {
+			super.clickHandler(event);
+			var dataField:String = DataGridListData(listData).dataField;
+
+			// 選択されたラジオボタンとselectflagをTrueに変更
+			data[dataField] = true;
+			selected = true;
+
+			var dgUser:DataGrid = DataGrid(DataGridListData(listData).owner);
+			var list:IList = IList(dgUser.dataProvider);
+			var rowIndex:int = list.getItemIndex(data);
+			var selectedIndex:int = parentDocument.selected;
+
+			// 変更された選択Indexと前回の選択Indexを比較
+			if (selectedIndex >= 0 && selectedIndex != rowIndex) {					
+				// 前回の選択Indexのselectflagをfalseに変更
+				var selectedItem:Object = list.getItemAt(selectedIndex);
+				selectedItem[dataField] = false;
+
+				// 前回の選択Indexのラジオボタンをfalseに変更
+				var renderer:RadioButton = RadioButton(dgUser.itemToItemRenderer(selectedItem));
+				if (renderer) {
+					renderer.selected = false;
+				}
+				trace("clear selected");
+			}
+
+			// 選択Indexを更新
+			parentDocument.selected = rowIndex;
+		}
+	]]></mx:Script>
+</mx:RadioButton>

@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:List xmlns:mx="http://www.adobe.com/2006/mxml"
+	dragEnabled="true" dropEnabled="true" dragMoveEnabled="true" creationComplete="init()">
+	<mx:itemRenderer>
+		<mx:Component>
+			<mx:HBox backgroundColor="#111111" horizontalScrollPolicy="off" doubleClickEnabled="true" doubleClick="edit(event)">
+				<mx:Script><![CDATA[
+					import mx.core.Application;
+					import mx.managers.PopUpManager;
+					import mx.core.IFlexDisplayObject;
+
+					private function edit(event:Event):void {
+						var i:int = outerDocument.selectedIndex;
+						if (i != -1) {
+							var popup:IFlexDisplayObject = null;
+							var item:XML = outerDocument.selectedItem as XML;
+							if (item) {
+								if (outerDocument.dragEnabled) {
+									popup = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
+									var editor:MediaEditor = popup as MediaEditor;
+									editor.selector = outerDocument;
+									editor.baseItem = item;
+								//} else {
+								//	popup = PopUpManager.createPopUp(Application.application as DisplayObject, PreviewWindow, true);
+								//	var preview:PreviewWindow = popup as PreviewWindow;
+								//	preview.baseURL = outerDocument.baseURL;
+								//	preview.item = item;
+								}
+								PopUpManager.centerPopUp(popup);
+							}
+						}
+					}
+
+					public function rowNum(item:Object):String {
+						var i:int = outerDocument.dataProvider.getItemIndex(item) + 1;
+						return String(i);
+					}
+
+					public function getName(item:Object):String {
+						return item.@name.toString();
+					}
+				]]></mx:Script>
+				<mx:Label text="{rowNum(data)}" width="30" textAlign="right" />
+				<mx:Label text="{getName(data)}" width="200" />
+			</mx:HBox>
+		</mx:Component>
+	</mx:itemRenderer>
+	<!-- コード -->
+	<mx:Script><![CDATA[
+		import com.adobe.utils.NumberFormatter;
+		import flash.desktop.ClipboardFormats;
+		import flash.desktop.NativeDragManager;
+		import flash.events.NativeDragEvent;
+		import flash.filesystem.File;
+		import mx.controls.Alert;
+		import mx.events.DragEvent;
+		import mx.managers.DragManager;
+
+		private var _address:String;
+		private var _baseData:XMLList;
+		private var _uploadFiles:Object = {};
+
+		private final function init():void {
+			addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, nativeDragEnterHandler);
+			addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, nativeDragDropHandler);
+		}
+
+		/** データセット */
+		public final function setData(address:String, data:XMLList):void {
+			_address = address;
+			_baseData = data;
+			dataProvider = data;
+			_uploadFiles = {};
+		}
+
+		/** アップロードファイル一覧 */
+		public final function getUploadFiles():Object {
+			return _uploadFiles;
+		}
+
+		/** アップロードファイル追加 */
+		public final function addUploadFile(path:String, file:File):Boolean {
+			var dst:File = new File("app-storage:/temp/" + _address + "/media/" + file.name); 
+			try {
+				file.parent.createDirectory();
+				file.copyTo(dst, true);
+				trace("copy: " + dst.nativePath);
+				_uploadFiles[path] = dst;
+				return true;
+			} catch (error:Error) {
+				trace("Error:", error.message);
+			}
+			return false;
+		}
+
+		/** アップロードファイル削除 */
+		public final function removeUploadFile(path:String):Boolean {
+			// 指定pathの"switch-data:"は除去して処理
+			var file:File = _uploadFiles[path.substring(12)];
+			if (file) {
+				try {
+					file.deleteFile();
+					trace("deleted: " + file.nativePath);
+					return true;
+				} catch (error:Error) {
+					trace("Error:", error.message);
+				}				
+			}
+			return false;
+		}
+
+		/** アップロードファイルをクリアする */
+		public final function clearUploadFiles():void {
+			_uploadFiles = {};
+		}
+
+		/** OSからのドラックイン */
+		private final function nativeDragEnterHandler(event:NativeDragEvent):void {
+			if (dragEnabled && event.clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT)) {
+				var files:Object = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT);
+				for (var i:int = 0; i < files.length; i++) {
+					if (!SwitchUtils.checkFileExt(files[i].url)) return;
+				}
+				NativeDragManager.acceptDragDrop(this);
+			}
+		}
+
+		/** OSからのドロップ受付 */
+		private final function nativeDragDropHandler(event:NativeDragEvent):void {
+			var files:Object = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT);
+			var pos:int = calculateNativeDropIndex(event);
+			for (var i:int = 0; i < files.length; i++) {
+				addFileItemAt(pos, files[i]);
+				pos++;
+			}
+		}
+
+		/** calculateDropIndexのNative版 */
+		private final function calculateNativeDropIndex(event:NativeDragEvent):int {
+			// setup a default return value.
+			var index:int = 0;
+
+			// calculate the y value of the mouse over the tree (stored in point)
+			var point:Point = this.globalToLocal(new Point(event.stageX, event.stageY));
+
+			// divide the y value by the height of the rows (and check to make sure its not zero),
+			// the interger value should be our index
+			if (this.rowHeight != 0) index = point.y / this.rowHeight;
+
+			return index;
+		}
+
+		/** アイテム追加 */
+		private final function addFileItemAt(pos:int, file:File):void {
+			// 同じファイル登録の検出
+			var items:XMLList = _baseData.image.(text() == "switch-data:/media/" + file.name);
+			items += _baseData.movie.(text() == "switch-data:/media/" + file.name);
+			if (items.length() > 0) {
+				Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
+				return;
+			}
+
+			if (addUploadFile("/media/" + file.name, file)) {
+				var item:XML = <item />;
+				item.@id = SwitchUtils.createNewID(_baseData, "m");
+				if (SwitchUtils.checkImageFileExt(file.name)) {
+					item.@type = "image";
+					item.appendChild(<image />);
+					item.image.setChildren("switch-data:/media/" + file.name);
+					item.@duration = 15000;
+				} else if (SwitchUtils.checkMovieFileExt(file.name)) {
+					item.@type = "movie";
+					item.appendChild(<movie />);
+					item.movie.setChildren("switch-data:/media/" + file.name);
+				}
+				item.@name = file.name.substring(0, file.name.lastIndexOf("."));
+				dataProvider.addItemAt(item, pos);
+				trace("drop[" + pos + "] <" + item.@id + "> " + file.name);				
+			}
+		}
+
+		override protected final function dragEnterHandler(event:DragEvent):void {
+			if (event.dragInitiator is MediaSelector) {
+				super.dragEnterHandler(event);
+				return;
+			}
+			DragManager.showFeedback(DragManager.NONE);
+		}
+
+		override protected final function dragDropHandler(event:DragEvent):void {
+			trace("drag&drop mediaselector" + typeof(event.currentTarget));
+			var pos:int = calculateDropIndex(event);
+			super.dragDropHandler(event);
+			scrollToIndex(pos);
+			if (event.action == DragManager.COPY) {
+				trace("media item copy");
+				var data:XML = dataProvider.getItemAt(pos);
+				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "m");
+			}
+		}
+
+		override protected final function dragCompleteHandler(event:DragEvent):void {
+			if (event.relatedObject is MediaSelector) {
+				super.dragCompleteHandler(event);
+				return;
+			}
+			trace("drag complete not media-selector");
+			event.preventDefault();
+		} 
+	]]></mx:Script>
+</mx:List>

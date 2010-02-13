@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TileList xmlns:mx="http://www.adobe.com/2006/mxml"
+	dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
+	<mx:itemRenderer>
+		<mx:Component>
+			 <mx:HBox width="94" height="28" horizontalAlign="center" horizontalScrollPolicy="off">
+				<mx:VBox width="90" height="28" backgroundColor="#111111" horizontalAlign="center">
+					<mx:Script><![CDATA[
+						public final function getName(item:Object):String {
+							var xml:XMLList = outerDocument._workspace.playlists.playlist.(@id == item.@id);
+							return xml.@name.toString();
+						}
+
+						public final function selectContent():void {
+							var params:URLVariables = new URLVariables();
+							params.pl = data.@id.toString();
+							var request:URLRequest = new URLRequest(outerDocument._baseURL + "/set/playlist");
+							request.method = URLRequestMethod.POST;
+							request.data = params;
+							sendToURL(request);
+							trace("shortcut: " + data.@id);
+						}
+					]]></mx:Script>
+					<mx:Button label="{getName(data)}" width="90" click="selectContent()" />
+				</mx:VBox>										 
+			 </mx:HBox>
+		</mx:Component>
+	</mx:itemRenderer>
+	<mx:Script><![CDATA[
+		import mx.managers.DragManager;
+		import mx.events.DragEvent;
+
+		public var _baseURL:String;
+		public var _workspace:XML;
+
+		public final function setData(workspace:XML, baseURL:String):void {
+			_workspace = workspace;
+			_baseURL = baseURL;
+		}
+
+		private final function checkDragEvent(event:DragEvent):Boolean {
+			if (event.dragInitiator is ShortcutList) return true;
+			if (event.dragSource.hasFormat("items")) {
+				var items:Array = event.dragSource.dataForFormat('items') as Array;
+				return (typeof(items[0]) == "xml" && items[0].name() == "playlist");
+			}
+			return false;
+		}
+
+		override protected final function dragEnterHandler(event:DragEvent):void {
+			if (checkDragEvent(event) && dataProvider.length < 15) {
+				super.dragEnterHandler(event);
+				return;
+			}
+			DragManager.showFeedback(DragManager.NONE);				
+		}
+
+		override protected final function dragDropHandler(event:DragEvent):void {
+			if (event.dragInitiator is ShortcutList) {
+				// 同じクラスからの場合はリストの入替えとする
+				super.dragDropHandler(event);
+				return;
+			}
+
+			hideDropFeedback(event);
+			mx_internal::lastDragEvent = null; 
+			mx_internal::resetDragScrolling(); 
+			DragManager.showFeedback(DragManager.NONE);
+
+			var items:Array = event.dragSource.dataForFormat('items') as Array;
+			var shortcut:XML = <item />
+			shortcut.@id = items[0].@id.toString();
+			var pos:int = calculateDropIndex(event);
+			dataProvider.addItemAt(shortcut, pos);
+		}
+
+		override protected final function dragCompleteHandler(event:DragEvent):void {
+			super.dragCompleteHandler(event);
+		} 
+	]]></mx:Script>
+</mx:TileList>

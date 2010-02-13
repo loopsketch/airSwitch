@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	horizontalAlign="center" verticalAlign="middle"
+	implements="mx.controls.listClasses.IDropInListItemRenderer,mx.managers.IFocusManagerComponent">
+	<mx:Script><![CDATA[
+	import mx.controls.DataGrid;
+		import mx.controls.dataGridClasses.DataGridListData;
+		import mx.controls.listClasses.BaseListData;
+		
+		/**
+		 * 選択値
+		 * DataGridColumn は editorDataField="selectedValue" にすること
+		 */
+		public var selected:Boolean;
+		
+		/** リストデータ */
+		private var _listData:DataGridListData;
+		
+		
+		/**
+		 * フォーカス
+		 * 
+		 * @param draw	
+		 */
+		public override final function drawFocus(draw:Boolean):void {
+			checkbox.setFocus();
+		}
+		
+		/**
+		 * 値の Setter
+		 */
+		[Bindable]
+		override public final function set data(i_value:Object):void {
+			super.data = i_value;
+			var obj:Object = data[_listData.dataField];
+			var work:String = "";
+			if (obj is Boolean || obj is XMLList) {
+				work = obj.toString();
+			} else {
+				work = obj as String;
+			}
+			if (work != null) {
+				if (work == "true") {
+					checkbox.selected = true;
+				} else {
+					checkbox.selected = false;
+				}
+			}
+		}
+		
+		/**
+		 * 値の Getter
+		 */
+		public override final function get data():Object {
+			return super.data;
+		}
+		
+		/**
+		 * リストデータの Getter
+		 */
+		public final function get listData():BaseListData {
+			return _listData;
+		}
+		
+		/**
+		 * リストデータの Setter
+		 */
+		public final function set listData(i_value:BaseListData):void {
+			_listData = DataGridListData(i_value);
+		}
+	]]></mx:Script>
+	<!-- チェックボックス -->
+	<mx:CheckBox id="checkbox" change="selected=checkbox.selected" />
+</mx:VBox>

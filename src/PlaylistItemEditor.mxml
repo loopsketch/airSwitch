@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	title="プレイリスト編集" showCloseButton="false" close="{onClose()}" creationComplete="init()">
+	<mx:HRule width="100%" alpha="0.2" />
+	<mx:Form id="displayConfigForm" width="100%" height="100%">
+		<mx:FormItem label="トランジション">
+			<mx:ComboBox id="transition" dataProvider="{_trantisionItems}" />
+		</mx:FormItem>
+		<mx:FormItem label="再生モード">
+			<mx:HBox>
+				<mx:ComboBox id="playmode" dataProvider="{_modeItems}" change="changePlaymode()" />
+				<mx:ComboBox id="plSelector" dataProvider="{workspace.playlists.playlist}" labelField="@name" change="changePlaylist()" />
+				<mx:ComboBox id="itemSelector" dataProvider="{_plItems}" />
+			</mx:HBox>
+		</mx:FormItem>
+	</mx:Form>
+	<mx:HBox id="bar" width="100%" horizontalAlign="center">
+		<mx:Button id="regist" label="登録" click="onRegist()" />
+		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
+	</mx:HBox>
+	<mx:Script><![CDATA[
+		import mx.collections.ArrayCollection;
+		import mx.managers.PopUpManager;
+
+		[Bindable]
+		public var workspace:XML;
+		public var baseItem:XML = null;
+
+		[Bindable]
+		private var _item:XML;
+
+		[Bindable]
+		private var _trantisionItems:ArrayCollection = new ArrayCollection([
+			{label:"カット", data:""},
+			{label:"スライド", data:"slide"},
+			{label:"ディゾルブ", data:"dissolve"}
+		]);
+
+		[Bindable]
+		private var _modeItems:ArrayCollection = new ArrayCollection([
+			{label:"次へ", data:""},
+			{label:"プレイリスト移動", data:"jump"},
+			{label:"最終フレームで停止", data:"stop"},
+			{label:"最終フレームで停止＆次の準備", data:"stop-prepared"},
+			{label:"次の準備ができるまで停止", data:"wait-prepared"}
+		]);
+
+		[Bindable]
+		private var _plItems:ArrayCollection = new ArrayCollection();
+
+		private final function init():void {
+			if (baseItem) {
+				_item = new XML(baseItem);
+				for each (var t:Object in _trantisionItems) {
+					if (_item.@transition == t.data) {
+						transition.selectedItem = t;
+						break;
+					}
+				}
+				if (_item.hasOwnProperty("@next")) {
+					var next:Array = _item.@next.split(/[\s|-]+/);
+					for each (var m:Object in _modeItems) {
+						if (next[0] == m.data) {
+							playmode.selectedItem = m;
+							changePlaymode();
+							changePlaylist();
+							break;
+						}
+					}
+					if (next.length == 3) {
+						for each (var data:Object in plSelector.dataProvider) {
+							if (data.@id == next[1]) {
+								plSelector.selectedItem = data;
+								changePlaylist();
+							}
+						}
+						itemSelector.selectedIndex = parseInt(next[2]);
+					}
+				} else {
+					changePlaymode();
+				}
+			}
+		}
+
+		/** プレイモード変更 */
+		private final function changePlaymode():void {
+			if (playmode.selectedItem.data == "jump") {
+				plSelector.enabled = true;
+				itemSelector.enabled = true;
+			} else {
+				plSelector.enabled = false;
+				itemSelector.enabled = false;
+			}
+		}
+
+		/** プレイリスト変更 */
+		private final function changePlaylist():void {
+			_plItems.removeAll();
+			for (var i:int = 0; i < plSelector.selectedItem.children().length(); i++) {
+				var item:XML = plSelector.selectedItem.children()[i];
+				var media:XMLList = workspace.medialist.item.(@id == item.toString());
+				if (media) {
+					_plItems.addItem({label:media.@name, data:i});
+				} else {
+					_plItems.addItem({label:(i + 1), data:i});
+				}
+			}
+		}
+
+		/** 登録処理 */
+		private final function onRegist():void {
+			baseItem.@transition = transition.selectedItem.data;
+			if (playmode.selectedItem.data == "jump") {
+				baseItem.@next = playmode.selectedItem.data + " " + plSelector.selectedItem.@id + "-" + itemSelector.selectedIndex;
+			} else {
+				baseItem.@next = playmode.selectedItem.data;
+			}
+			onClose();
+		}
+
+		/** クローズ処理 */
+		private final function onClose():void {
+			PopUpManager.removePopUp(this);
+		}
+	]]></mx:Script>
+</mx:TitleWindow>
