@@ -328,6 +328,7 @@
 
 		import com.adobe.serialization.json.JSON;  
 
+
 		[Embed(source="../images/switch_logo.png")]
         [Bindable] private var _logo:Class;
 
