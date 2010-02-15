@@ -369,6 +369,7 @@
 
 		private var _previewTimer:Timer = null;
 		private var _statusTimer:Timer = null;
+		private var _mediaSyncronizer:MediaSyncronizer = null;
 
 		private var _editable:Boolean = false;
 		private var _uploader:UploadProgressBar;
@@ -554,7 +555,6 @@
 			var loader:URLLoader = new URLLoader();
 			var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
 			request.useCache = false;
-			loader.load(request);
 			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 				_workspace = new XML(event.target.data);
 				var display:XML = getEditDisplay();
@@ -563,11 +563,13 @@
 				shortcutList.setData(_workspace, baseURL());
 				startPreview(); // 繋がった場合、プレビューの開始
 				startStatus();
+				_mediaSyncronizer = new MediaSyncronizer(baseURL(), _workspace.medialist.item);
 			});
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace(event);
 				Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
 			});
+			loader.load(request);
 		}
 
 		/** プレビューの開始 */
@@ -716,6 +718,7 @@
 				_statusTimer.stop();
 			}
 		}
+
 
 		/** 輝度変更 */
 		private final function changeLuminance(event:Event):void {
