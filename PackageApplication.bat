@@ -14,7 +14,7 @@ if not exist %CERTIFICATE% goto certificate
 
 :: Output
 if not exist air md air
-set AIR_FILE=air/airSvvitch.air
+set AIR_FILE=air/airSvvitch.exe
 
 :: Input
 set APP_XML=application.xml 

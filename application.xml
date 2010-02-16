@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?> 
-<application xmlns="http://ns.adobe.com/air/application/1.5">
+<application xmlns="http://ns.adobe.com/air/application/2.0beta2">
 	<id>airSvvitch</id> 
 	<version>0.3</version> 
 	<filename>airSvvitch</filename> 
