@@ -564,7 +564,7 @@
 				shortcutList.setData(_workspace, baseURL());
 				startPreview(); // 繋がった場合、プレビューの開始
 				startStatus();
-				_mediaSyncronizer = new MediaSyncronizer(baseURL(), _workspace.medialist.item);
+				_mediaSyncronizer = new MediaSyncronizer(display, _workspace.medialist.item);
 			});
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace(event);
