@@ -3,6 +3,7 @@
 	import flash.filesystem.*;
 
 	import com.adobe.utils.NumberFormatter;
+	import mx.utils.StringUtil;
 
 
 	/**
@@ -16,6 +17,7 @@
 			return (zero + num.toString()).substr(-width);
 		}
 
+		/** 日付時刻を文字列にフォーマット */
 		public static function formatDate(date:Date):String {
 			var d:String = format(date.fullYear, 4) + "-" + format(date.month + 1, 2) + "-" + format(date.date, 2);
 			var t:String = format(date.hours, 2) + ":" + format(date.minutes, 2) + ":" + format(date.seconds, 2);
@@ -23,7 +25,17 @@
 			return d + "T" + t + tz;
 		}
 
-		/** ディスプレイ情報保存 */
+		/** 日付時刻文字列からDate生成 */
+		// 2005-01-01 12:00:00
+		public static function parseSortedDate(s:String):Date {
+			var data:Array = StringUtil.trim(s).split(/-|\s+|T|:/);
+			if (data.length >= 6) {
+				return new Date(parseInt(data[0]), parseInt(data[1]) - 1, parseInt(data[2]), parseInt(data[3]), parseInt(data[4]), parseInt(data[5]))
+			}
+			return null;
+		}
+
+		/** xmlをファイル保存 */
 		public static function saveXML(xml:XML, file:File):Boolean {
 			var fs:FileStream = new FileStream();
 			try {
@@ -72,6 +84,7 @@
 			return false;
 		}
 
+		/**　静止画ファイルの拡張子チェック　*/
 		public static function checkImageFileExt(path:String):Boolean {
 			var allows:Array = [".png", ".jpg", ".bmp"];
 			for (var i:int = 0; i < allows.length; i++) {
@@ -80,6 +93,7 @@
 			return false;
 		}
 
+		/**　動画ファイルの拡張子チェック　*/
 		public static function checkMovieFileExt(path:String):Boolean {
 			var allows:Array = [".mp4", ".mpg", ".mov", ".wmv", ".avi"];
 			for (var i:int = 0; i < allows.length; i++) {

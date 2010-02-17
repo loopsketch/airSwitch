@@ -18,6 +18,7 @@
 		<maximizable>false</maximizable> 
 		<resizable>false</resizable> 
 	</initialWindow>
+	<supportedProfiles>extendedDesktop</supportedProfiles>
 	<icon>
 		<image16x16>icons/16.png</image16x16>
 		<image32x32>icons/32.png</image32x32>

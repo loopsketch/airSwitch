@@ -87,15 +87,50 @@
 						// files.name/size/modified/md5
 						trace("result: " + result.files.name);
 						var file:File = getFile(result.path);
-						var doDownloading:Boolean = true;
+						var downloading:Boolean = false;
 						if (file.exists) {
-							if (file.size != parseInt(result.files.size)) {
-								downloadFile(result.path);
-							} else {
-								getFileStatus();
+							// 存在する場合は比較する
+							var size:int = parseInt(result.files.size);
+							var modified:Date = SwitchUtils.parseSortedDate(result.files.modified);
+							if (file.size != size) {
+								// ファイルサイズが異なれば更新
+								downloading = true;
+							} else if (file.modificationDate < modified) {
+								// リモートの方が更新日時が新しい
+								if (true) {
+									trace('check md5');
+									var localMD5:String;
+									var fs:FileStream = new FileStream();
+									try {
+										trace('load local file');
+										fs.open(file, FileMode.READ);
+										var buf:ByteArray = new ByteArray();
+										fs.readBytes(buf);
+										trace('calculate md5');
+										var md5:MD5Stream = new MD5Stream();
+										md5.update(buf);
+										localMD5 = md5.complete();
+										trace('match result: ' + (localMD5 == result.files.md5));
+									} catch (error:Error) {
+										trace('failed md5 check: ' + error.message);
+									}
+									fs.close();
+									if (result.files.md5 != localMD5) {
+										// ファイル内容が異なる場合ダウンロード
+										downloading = true;
+									}									
+								} else {
+									downloading = true;									
+								}
 							}
 						} else {
+							// 存在しない場合はダウンロード
+							downloading = true;
+						}
+						if (downloading) {
 							downloadFile(result.path);
+						} else {
+							getFileStatus();
 						}
 					} catch (error:Error) {
 						trace(error.message + ":" + json);
@@ -103,7 +138,7 @@
 				});
 				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 					trace("I/O error: " + event);
-					//Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
+					// Alert.show("error!");
 					getFileStatus();
 				});
 				loader.load(request);
@@ -124,16 +159,16 @@
 				try {
 					fs.open(file, FileMode.WRITE);
 					fs.writeBytes(event.target.data);
-					fs.close();
-					trace("download: " + path);
+					trace("stored: " + path);
 				} catch (error:Error) {
-					trace(error.message);
+					trace("failed write file: " + error.message);
 				}
+				fs.close();
 				getFileStatus();
 			});
-			loader.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
-				// trace(event.bytesLoaded + "/" + event.bytesTotal);
-			});
+			//loader.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
+			//	trace(event.bytesLoaded + "/" + event.bytesTotal);
+			//});
 
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace("I/O error: " + event);
