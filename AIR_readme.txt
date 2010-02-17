@@ -1,15 +1,15 @@
-1. CreateCertificate.bat��ҏW���Ă�������
-   AIR SDK�̈ʒu��PASSWORD�Ȃǂ̊��ϐ������ɍ��킹�ĕύX���Ă��������B
-   ��ɐ�������PackageApplication.bat�ł� certificate.pfx �Ƃ����t�@�C���𗘗p����悤�ɏ�����Ă��܂��̂ŁA
-   ���̂܂܎g�p����ɂ�CERTIFICATE���ύX���Ă��������B
+﻿1. CreateCertificate.batを編集してください
+   AIR SDKの位置やPASSWORDなどの環境変数を環境に合わせて変更してください。
+   後に説明するPackageApplication.batでは certificate.pfx というファイルを利用するように書かれていますので、
+   そのまま使用するにはCERTIFICATEも変更してください。
 
-2. CreateCertificate.bat�����s����certificate.pfx������Ă�������
+2. CreateCertificate.batを実行してcertificate.pfxを作ってください
 
-3. PackageApplication.bat��ҏW���Ă�������
-   AIR SDK�̈ʒu��CERTIFICATE�Ȃǂ̊��ϐ������ɍ��킹�ĕύX���Ă��������B
+3. PackageApplication.batを編集してください
+   AIR SDKの位置やCERTIFICATEなどの環境変数を環境に合わせて変更してください。
 
-4. CreateCertificate.bat�����s����air�̃p�b�P�[�W���쐬���Ă�������
-   �ؖ����̃p�X���[�h�𕷂���܂��̂ŁACreateCertificate.bat�ō쐬�����Ƃ��̃p�X���[�h����͂��܂��B
+4. CreateCertificate.batを実行してairのパッケージを作成してください
+   証明書のパスワードを聞かれますので、CreateCertificate.batで作成したときのパスワードを入力します。
 
 
 
