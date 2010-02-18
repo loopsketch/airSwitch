@@ -432,16 +432,33 @@
 
 		/** トグルボタンによるviewの変更 */
 		private final function changeView(event:Event):void {
-			trace('view: ' + navigation.selectedIndex);
-			switch (navigation.selectedIndex) {
-				case 0:
-					// ディスプレイ設定
-					initDisplayConfig();
-					break;
-				case 1:
-					// 操作
-					initPlayOperation();
-					break;
+			trace("change: " + _editedDisplay);
+			if (_editedDisplay) {
+				var i:int = navigation.selectedIndex;
+				if (i == 0) {
+					// 1→0への遷移の時、変更の有無を確認
+					Alert.show("変更されていますが、保存せずに移動してよろしいですか？", "アラート", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+						if (event.detail == Alert.YES) {
+							_editedDisplay = false;
+							editedSign.text = "";
+							initDisplayConfig();
+						} else {
+							navigation.selectedIndex = 1;
+						}
+					});
+				}
+			} else {
+				trace('view: ' + navigation.selectedIndex);
+				switch (navigation.selectedIndex) {
+					case 0:
+						// ディスプレイ設定
+						initDisplayConfig();
+						break;
+					case 1:
+						// 操作
+						initPlayOperation();
+						break;
+				}				
 			}
 		}
 
@@ -1089,8 +1106,18 @@
 
 		/** 閉じる */
 		private final function onClose():void {
-			saveDisplay();
-			stage.nativeWindow.close();
+			if (_editedDisplay) {
+				// 変更の有無を確認
+				Alert.show("変更されていますが、保存せずに終了してよろしいですか？", "アラート", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+					if (event.detail == Alert.YES) {
+						saveDisplay();
+						stage.nativeWindow.close();
+					}
+				});
+			} else {
+				saveDisplay();
+				stage.nativeWindow.close();
+			}
 		}
 	]]></mx:Script>
 </mx:Application>
