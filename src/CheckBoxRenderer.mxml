@@ -46,6 +46,7 @@
 					checkbox.selected = false;
 				}
 			}
+			selected = checkbox.selected;
 		}
 		
 		/**
@@ -70,5 +71,5 @@
 		}
 	]]></mx:Script>
 	<!-- チェックボックス -->
-	<mx:CheckBox id="checkbox" change="selected=checkbox.selected" />
+	<mx:CheckBox id="checkbox" change="{selected = checkbox.selected}" />
 </mx:VBox>

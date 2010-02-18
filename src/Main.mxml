@@ -420,6 +420,7 @@
 			trace("edited");
 			_editedDisplay = true;
 			editedSign.text = "*";
+			saveButton.setStyle("fillColors", [0xe66666, 0xff6666]);
 		}
 
 		private final function addShadow(comp:DisplayObject):void {
@@ -441,6 +442,7 @@
 						if (event.detail == Alert.YES) {
 							_editedDisplay = false;
 							editedSign.text = "";
+							saveButton.setStyle("fillColors", [0xe6eeee, 0xffffff]);
 							initDisplayConfig();
 						} else {
 							navigation.selectedIndex = 1;
@@ -791,7 +793,9 @@
 				//swButton.enabled = true;
 				sourceTab.selectedIndex = 0;
 				mediaTab.enabled = false;
-				saveButton.visible = false;
+				if (!_editedDisplay) {
+					saveButton.visible = false;
+				}
 				addPlaylistButton.enabled = false;
 				deletePlaylistButton.enabled = false;
 				addMediaButton.enabled = false;
