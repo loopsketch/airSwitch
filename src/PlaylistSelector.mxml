@@ -56,6 +56,7 @@
 				var data:XML = dataProvider.getItemAt(pos);
 				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "pl");
 			}
+			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		//override protected final function dragCompleteHandler(event:DragEvent):void {

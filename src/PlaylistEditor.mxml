@@ -58,8 +58,10 @@
 	<mx:Script><![CDATA[
 		import mx.managers.DragManager;
 		import mx.events.DragEvent;
+		import mx.events.DragEvent;
 
 		public var _workspace:XML;
+
 
 		public final function setData(workspace:XML):void {
 			_workspace = workspace;
@@ -82,6 +84,8 @@
 		}
 
 		override protected final function dragDropHandler(event:DragEvent):void {
+			dispatchEvent(new EditedWorkspaceEvent());
+
 			var pos:int = calculateDropIndex(event);
 			if (event.dragInitiator is PlaylistEditor) {
 				// 同じクラスからの場合はリストの入替えとする

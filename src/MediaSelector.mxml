@@ -197,15 +197,16 @@
 				var data:XML = dataProvider.getItemAt(pos);
 				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "m");
 			}
+			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
-		override protected final function dragCompleteHandler(event:DragEvent):void {
-			if (event.relatedObject is MediaSelector) {
-				super.dragCompleteHandler(event);
-				return;
-			}
-			trace("drag complete not media-selector");
-			event.preventDefault();
-		} 
+		//override protected final function dragCompleteHandler(event:DragEvent):void {
+		//	if (event.relatedObject is MediaSelector) {
+		//		super.dragCompleteHandler(event);
+		//		return;
+		//	}
+		//	trace("drag complete not media-selector");
+		//	event.preventDefault();
+		//} 
 	]]></mx:Script>
 </mx:List>

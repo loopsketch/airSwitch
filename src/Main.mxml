@@ -148,7 +148,8 @@
 	<mx:Number id="selected">{getSelectedIndex(_displays)}</mx:Number><!-- radioButtonの選択行 -->
 	<mx:ApplicationControlBar id="titleBar" dock="true">
 		<mx:Image id="appLogo" source="{_logo}" width="32" height="32" />
-		<mx:Label id="appTitle" text="airSvvitch" width="100%" />
+		<mx:Label id="appTitle" text="airSvvitch" />
+		<mx:Label id="editedSign" text="" width="100%" />
 		<mx:ToggleButtonBar id="navigation">
 			<mx:dataProvider>
 				<mx:String>ディスプレイ選択</mx:String>
@@ -305,6 +306,7 @@
 	<mx:Script><![CDATA[
 		import flash.display.Sprite;
 		import flash.events.Event;
+		import flash.events.EventDispatcher;
 		import flash.events.IOErrorEvent;
 		import flash.events.MouseEvent;
 		import flash.events.TimerEvent;
@@ -372,13 +374,16 @@
 		private var _statusTimer:Timer = null;
 		private var _mediaSyncronizer:MediaSyncronizer = null;
 
+		private var _editedDisplay:Boolean = false;
+
 		private var _editable:Boolean = false;
 		private var _uploader:UploadProgressBar;
 
 		private var _shadowFilter:DropShadowFilter;		
 
+
 		// 初期化
-		public final function init():void {
+		private final function init():void {
 			_shadowFilter = new DropShadowFilter();
 			_shadowFilter.color = 0x000000;
 			_shadowFilter.alpha = 0.4;
@@ -404,10 +409,20 @@
 					trace("delete " + file.nativePath);
 				}				
 			}
+			addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
+			playlistSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
+			mediaSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
+			playlistEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			initDisplayConfig();
 		}
 
-		private function addShadow(comp:DisplayObject):void {
+		public final function editedWorkspace(event:EditedWorkspaceEvent):void {
+			trace("edited");
+			_editedDisplay = true;
+			editedSign.text = "*";
+		}
+
+		private final function addShadow(comp:DisplayObject):void {
 			comp.filters = [_shadowFilter];
 		}
 
@@ -821,7 +836,14 @@
 		private final function addPlaylist(event:Event):void {
 			var list:XML = <playlist name="新しいプレイリスト" />
 			list.@id = SwitchUtils.createNewID(_workspace.playlists.playlist, "pl");
-			playlistSelector.dataProvider.addItem(list);
+			var pos:int = playlistSelector.selectedIndex;
+			if (pos == -1) {
+				pos = playlistSelector.dataProvider.length;
+			}
+			playlistSelector.dataProvider.addItemAt(list, pos);
+			playlistSelector.selectedIndex = pos;
+			playlistSelector.scrollToIndex(pos);
+			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		/** プレイリスト削除 */
@@ -831,6 +853,7 @@
 				playlistSelector.dataProvider.removeItemAt(i);
 				if (i > 0) playlistSelector.scrollToIndex(i - 1);
 				unselectPlaylist();
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -838,6 +861,7 @@
 		private final function changePlaylistName(event:Event):void {
 			if (_editable && _playlist) {
 				_playlist.@name = playlistName.text;
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -845,6 +869,7 @@
 		private final function changeColor(event:Event):void {
 			if (_editable && _playlist) {
 				_playlist.@color = colorPicker.selectedColor.toString(16);
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -891,6 +916,7 @@
 				}
 				playlistEditor.dataProvider.removeItemAt(i);
 				if (i > 0) playlistEditor.scrollToIndex(i - 1);
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -944,6 +970,7 @@
 				}
 				mediaSelector.dataProvider.removeItemAt(i);
 				if (i > 0) mediaSelector.scrollToIndex(i - 1);
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
