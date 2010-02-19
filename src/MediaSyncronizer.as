@@ -20,25 +20,27 @@
 
 	/**
 	 * メディア同期
+	 *
 	 * @author toru@loopsketch.com
 	 */
-	public class MediaSyncronizer extends Timer {
+	public class MediaSyncronizer {
 
+		private var _timer:Timer;
 		private var _display:XML = null;
-		private var _media:XMLList;
-		private var _mediaSet:Array;
+		private var _media:XMLList = null;
+		private var _mediaSet:Array = null;
 
 		//private var _cml:CompositeMassLoader;
 
 
 		public function MediaSyncronizer(display:XML, media:XMLList) {
-			super(500, 1);
 			_display = display;
 			_media = media;
 
 			//_cml = new CompositeMassLoader();
-			addEventListener(TimerEvent.TIMER, run);
-			start();
+			_timer = new Timer(100, 1);
+			_timer.addEventListener(TimerEvent.TIMER, run);
+			_timer.start();
 		}
 
 		/** ディスプレイへのベースURL取得 */
@@ -51,6 +53,10 @@
 		/** 保存ファイル取得 */
 		private final function getFile(path:String):File {
 			return new File("app-storage:/datas/" + _display.address + "/" + path);			
+		}
+
+		public final function running():Boolean {
+			return _timer.running || _media != null;
 		}
 
 		public final function run(event:TimerEvent):void {
@@ -97,7 +103,7 @@
 								downloading = true;
 							} else if (file.modificationDate < modified) {
 								// リモートの方が更新日時が新しい
-								if (true) {
+								if (false) {
 									trace('check md5');
 									var localMD5:String;
 									var fs:FileStream = new FileStream();
@@ -144,6 +150,7 @@
 				loader.load(request);
 			} else {
 				trace("cpmplete files");
+				_media = null;
 			}
 		}
 

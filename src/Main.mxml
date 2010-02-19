@@ -277,10 +277,10 @@
 							<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
 						</mx:HBox>
 						<mx:HBox width="100%">
-							<mx:TextArea id="playlistText" width="100%" height="80" />
+							<mx:TextArea id="playlistText" width="100%" height="80" editable="false" />
 							<mx:VBox height="100%">
 								<mx:Spacer height="100%" />
-								<mx:Button id="textUpdateButton" label="TEXT" click="updatePlaylistText(event)" />	
+								<mx:Button id="textUpdateButton" label="TEXT" click="updatePlaylistText(event)" visible="false" />	
 							</mx:VBox>
 						</mx:HBox>
 						<svvitch:PlaylistEditor id="playlistEditor"
@@ -440,8 +440,14 @@
 		/** トグルボタンによるviewの変更 */
 		private final function changeView(event:Event):void {
 			trace("change: " + _editedDisplay);
-			if (_editedDisplay) {
-				var i:int = navigation.selectedIndex;
+			var i:int = navigation.selectedIndex;
+			if (i == 0 && _mediaSyncronizer != null && _mediaSyncronizer.running()) {
+				Alert.show("メディアを同期中ですので少々お待ちください");
+				stopPreview();
+				stopStatus();
+				navigation.selectedIndex = 1;
+
+			} else if (_editedDisplay) {
 				if (i == 0) {
 					// 1→0への遷移の時、変更の有無を確認
 					Alert.show("変更されていますが、保存せずに移動してよろしいですか？", "アラート", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
@@ -451,10 +457,13 @@
 							saveButton.setStyle("fillColors", [0xe6eeee, 0xffffff]);
 							initDisplayConfig();
 						} else {
+							stopPreview();
+							stopStatus();
 							navigation.selectedIndex = 1;
 						}
 					});
 				}
+
 			} else {
 				trace('view: ' + navigation.selectedIndex);
 				switch (navigation.selectedIndex) {
@@ -721,14 +730,14 @@
 						transition.selectedIndex = 0;
 					}
 				}
-				if (status['set-text']) {
-					var data:Array = status['set-text'].split(":", 2);
-					var playlists:XMLList = _workspace.playlists.playlist.(@id == data[0]);
-					for (var i:int = 0; i < playlists.length(); i++) {
-						playlists[i].@text = data[1];
-						trace(playlists[i].toXMLString());
-					}
-				}
+				//if (status['set-text']) {
+				//	var data:Array = status['set-text'].split(":", 2);
+				//	var playlists:XMLList = _workspace.playlists.playlist.(@id == data[0]);
+				//	for (var i:int = 0; i < playlists.length(); i++) {
+				//		playlists[i].@text = data[1];
+				//		trace(playlists[i].toXMLString());
+				//	}
+				//}
 				swButton.enabled = (_preparedContent != null && _preparedContent.length > 0) || (_nextContent != null && _nextContent.length > 0);
 			} catch (error:Error) {
 				trace(error.message + ":" + json);
@@ -807,12 +816,30 @@
 			} else {
 				colorPicker.selectedColor = 0x111111;		
 			}
-			playlistName.text = _playlist.@name.toString();
-			playlistName.horizontalScrollPosition = 0;
-			if (_playlist.@text) {
-				playlistText.text = _playlist.@text.toString();
+			var useText:Boolean = false;
+			var items:XMLList = _playlist.item;
+			for (var i:int = 0; i < items.length(); i++) {
+				var media:XMLList = _workspace.medialist.item.(@id == items[i].text());
+				if (media.text.length() > 0) {
+					useText = true;
+					break;
+				}
+			}
+			if (useText) {
+				playlistName.text = _playlist.@name.toString();
+				playlistName.horizontalScrollPosition = 0;
+				if (_playlist.@text) {
+					playlistText.text = _playlist.@text.toString();
+				} else {
+					playlistText.text = "";
+				}
+				playlistText.editable = true;
+				textUpdateButton.visible = true;
+				
 			} else {
 				playlistText.text = "";
+				playlistText.editable = false;
+				textUpdateButton.visible = false;
 			}
 			//textUpdateButton.visible = false;
 			selectContent(event);
@@ -832,6 +859,7 @@
 				sendToURL(request);
 				trace("set playlist: " + params.pl + "-" + params.i);				
 			}
+			
 		}
 
 		/** プレイリストの選択解除 */
