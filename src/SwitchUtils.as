@@ -12,7 +12,7 @@
 	 */
 	public class SwitchUtils {		
 
-		private static function format(num:int, width:int):String {
+		public static function format(num:int, width:int):String {
 			var zero:String = Math.pow(10, width - 1).toString().substr(1);
 			return (zero + num.toString()).substr(-width);
 		}

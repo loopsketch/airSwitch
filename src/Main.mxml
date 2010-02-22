@@ -144,6 +144,33 @@
 			downSkin: Embed(source="../images/transition_dissolve.png");
 			disabledSkin: Embed(source="../images/transition_dissolve.png");
 		}
+
+		.titleText {
+			color: #33cc33;
+			font-size: 12px;
+			font-weight: bold;
+			padding-top: 8;
+		}
+
+		.stopWatchText {
+			color: #cccccc;
+			font-size: 20px;
+			font-weight: bold;
+		}
+
+		.statusText {
+			color: #33cc33;
+			font-size: 10px;
+			font-weight: bold;
+		}
+
+		.footerText {
+			color: #cccccc;
+			font-size: 11px;
+			font-weight: bold;
+			text-align: center;
+		}
+
 	</mx:Style>
 	<mx:Number id="selected">{getSelectedIndex(_displays)}</mx:Number><!-- radioButtonの選択行 -->
 	<mx:ApplicationControlBar id="titleBar" dock="true">
@@ -201,27 +228,27 @@
 					<mx:Image source="{_iconBrightness}" width="24" height="24" toolTip="輝度設定" />
 				</mx:HBox>
 				<mx:VBox width="240" backgroundColor="#000000" paddingLeft="1" verticalGap="1">
-					<mx:Label text="再生中コンテンツ:" color="#33cc33" />
+					<mx:Label text="再生中コンテンツ:" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
 					<mx:Label text="{_currentPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
 					<mx:Label text="{_currentContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />									
 					<mx:Label text="残り時間 {_timeRemain}(概算)" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />						
-					<mx:Label text="次のコンテンツ:" color="#33cc33" paddingTop="8" />
+					<mx:Label text="次のコンテンツ:" paddingTop="8" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
 					<mx:Label text="{_nextPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
 					<mx:Label text="{_nextContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />
-					<mx:Label text="トランジション:" color="#33cc33" paddingTop="8" />
+					<mx:Label text="トランジション:" paddingTop="8" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
-					<mx:ToggleButtonBar id="transition" horizontalGap="1">
+					<mx:ToggleButtonBar id="transition" horizontalGap="1" paddingTop="2">
 						<mx:dataProvider>
 							<mx:Object toolTip="OFF" />
 							<mx:Object toolTip="スライド" label="Slide" />
 							<mx:Object toolTip="ディゾルブ" label="Dissolve" />
 						</mx:dataProvider>
 					</mx:ToggleButtonBar>
-					<mx:Label text="遷移アクション:" color="#33cc33" paddingTop="8" />
+					<mx:Label text="遷移アクション:" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
-					<mx:ToggleButtonBar id="action" horizontalGap="1">
+					<mx:ToggleButtonBar id="action" horizontalGap="1" paddingTop="2">
 						<mx:dataProvider>
 							<mx:Object toolTip="次へ" />
 							<mx:Object toolTip="最終フレームで停止" label="St" />
@@ -230,85 +257,101 @@
 							<mx:Object toolTip="プレイリスト移動" label="Ju" />
 						</mx:dataProvider>
 					</mx:ToggleButtonBar>
-					<mx:Label text="準備コンテンツ:" color="#33cc33" paddingTop="8" />
+					<mx:Label text="準備コンテンツ:" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
 					<mx:Label text="{_preparedPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
 					<mx:Label text="{_preparedContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />									
 				</mx:VBox>
-			</mx:VBox>
-			<mx:VBox>
-				<mx:TabNavigator id="sourceTab" backgroundColor="#333333" paddingBottom="0">
-					<mx:VBox label="プレイリスト" paddingLeft="4" paddingRight="4" paddingBottom="4">
-						<mx:HBox width="100%" verticalAlign="middle">
-							<mx:Image source="{_iconXmag}" width="16" height="16" toolTip="プレイリスト名で絞込み検索" />
-							<mx:TextInput id="findPlaylist" text="" width="120" change="filterPlaylist(event)" />								
-							<mx:Spacer width="100%"/>
-							<mx:Button id="addPlaylistButton" label="＋" click="addPlaylist(event)"  />
-							<mx:Button id="deletePlaylistButton" label="－" click="deletePlaylist(event)" />
-						</mx:HBox>
-						<svvitch:PlaylistSelector id="playlistSelector" dragEnabled="true"
-							dataProvider="{_workspace.playlists.playlist}" width="250" height="580"
-							change="changePlaylist(event)" />
-					</mx:VBox>
-					<mx:VBox id="mediaTab" label="メディア" paddingLeft="4" paddingRight="4" paddingBottom="4">
-						<mx:HBox width="100%" verticalAlign="middle">
-							<mx:Image source="{_iconXmag}" width="16" height="16" toolTip="メディア名で絞込み検索" />
-							<mx:TextInput id="findMedia" text="" width="120" change="filterMedia(event)" />								
-							<mx:Spacer width="100%"/>
-							<mx:Button id="addMediaButton" label="＋" click="addMedia(event)" />
-							<mx:Button id="deleteMediaButton" label="－" click="deleteMedia(event)" />
-						</mx:HBox>
-						<svvitch:MediaSelector id="mediaSelector" width="250" height="580" />								
-					</mx:VBox>
-				</mx:TabNavigator>
-			</mx:VBox>
-			<mx:VBox>
-				<mx:HBox width="100%">
-					<mx:Button id="editMode" click="toggleEditMode(event)" />
-					<mx:Spacer width="100%"/>
-					<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
-				</mx:HBox>
-				<mx:TabNavigator backgroundColor="#333333"  paddingBottom="0">
-					<mx:VBox width="100%" label="プレイリスト編成" paddingLeft="4" paddingRight="4" paddingBottom="4">
-						<mx:HBox width="100%">
-							<mx:ColorPicker id="colorPicker" editable="true" change="changeColor(event)" />
-							<mx:TextInput id="playlistName" text="" change="changePlaylistName(event)" width="300" />								
-							<mx:Spacer width="100%"/>
-							<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
-						</mx:HBox>
-						<mx:HBox width="100%">
-							<mx:TextArea id="playlistText" width="100%" height="80" editable="false" />
-							<mx:VBox height="100%">
-								<mx:Spacer height="100%" />
-								<mx:Button id="textUpdateButton" label="TEXT" click="updatePlaylistText(event)"
-									toolTip="文字テロップを更新" visible="false" />
-							</mx:VBox>
-						</mx:HBox>
-						<svvitch:PlaylistEditor id="playlistEditor"
-							dataProvider="{_playlist.item}" width="480" height="250"
-							change="selectContent(event)" />
-						<mx:HBox width="100%">
-							<mx:Spacer width="100%"/>
-							<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
-						</mx:HBox>
-					</mx:VBox>
-					<!-- mx:VBox width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
-						<mx:DateField />
-					</mx:VBox -->
-				</mx:TabNavigator>
-				<mx:Panel title="ショートカット" width="100%">
-					<svvitch:ShortcutList id="shortcutList"
-							dataProvider="{_workspace.shortcuts.item}" width="480" height="100" />
-					<mx:HBox width="100%">
-						<mx:Spacer width="100%"/>
-						<mx:Button id="deleteShortcutButton" label="－"  click="deleteShorcut(event)" />
+				<mx:VBox width="240" backgroundColor="#000000" paddingLeft="1" verticalGap="2">
+					<mx:Label text="ストップウォッチ:" styleName="titleText" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:HBox width="235" verticalAlign="middle" horizontalGap="1" >
+						<mx:Label id="watchTime" text="00:00:00" textAlign="center" width="100%" styleName="stopWatchText" />
+						<mx:Button id="watchButton" label="開始" click="actionStopWatch(event)" />
+						<mx:Button id="watchResetButton" label="ﾘｾｯﾄ" click="resetStopWatch()" />
 					</mx:HBox>
-				</mx:Panel>
+				</mx:VBox>
+			</mx:VBox>
+			<mx:VBox>
+				<mx:HBox>
+					<mx:VBox>
+						<mx:TabNavigator id="sourceTab" backgroundColor="#333333" paddingBottom="0">
+							<mx:VBox label="プレイリスト" paddingLeft="4" paddingRight="4" paddingBottom="4">
+								<mx:HBox width="100%" verticalAlign="middle">
+									<mx:Image source="{_iconXmag}" width="16" height="16" toolTip="プレイリスト名で絞込み検索" />
+									<mx:TextInput id="findPlaylist" text="" width="120" change="filterPlaylist(event)" />								
+									<mx:Spacer width="100%"/>
+									<mx:Button id="addPlaylistButton" label="＋" click="addPlaylist(event)"  />
+									<mx:Button id="deletePlaylistButton" label="－" click="deletePlaylist(event)" />
+								</mx:HBox>
+								<svvitch:PlaylistSelector id="playlistSelector" dragEnabled="true"
+									dataProvider="{_workspace.playlists.playlist}" width="250" height="572"
+									change="changePlaylist(event)" />
+							</mx:VBox>
+							<mx:VBox id="mediaTab" label="メディア" paddingLeft="4" paddingRight="4" paddingBottom="4">
+								<mx:HBox width="100%" verticalAlign="middle">
+									<mx:Image source="{_iconXmag}" width="16" height="16" toolTip="メディア名で絞込み検索" />
+									<mx:TextInput id="findMedia" text="" width="120" change="filterMedia(event)" />								
+									<mx:Spacer width="100%"/>
+									<mx:Button id="addMediaButton" label="＋" click="addMedia(event)" />
+									<mx:Button id="deleteMediaButton" label="－" click="deleteMedia(event)" />
+								</mx:HBox>
+								<svvitch:MediaSelector id="mediaSelector" width="250" height="572" />								
+							</mx:VBox>
+						</mx:TabNavigator>
+					</mx:VBox>
+					<mx:VBox>
+						<mx:HBox width="100%">
+							<mx:Button id="editMode" click="toggleEditMode(event)" />
+							<mx:Spacer width="100%"/>
+							<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
+						</mx:HBox>
+						<mx:TabNavigator backgroundColor="#333333"  paddingBottom="0">
+							<mx:VBox width="100%" label="プレイリスト編成" paddingLeft="4" paddingRight="4" paddingBottom="4">
+								<mx:HBox width="100%">
+									<mx:ColorPicker id="colorPicker" editable="true" change="changeColor(event)" />
+									<mx:TextInput id="playlistName" text="" change="changePlaylistName(event)" width="300" />								
+									<mx:Spacer width="100%"/>
+									<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
+								</mx:HBox>
+								<mx:HBox width="100%">
+									<mx:TextArea id="playlistText" width="100%" height="80" editable="false" />
+									<mx:VBox height="100%">
+										<mx:Spacer height="100%" />
+										<mx:Button id="textUpdateButton" label="TEXT" click="updatePlaylistText(event)"
+											toolTip="文字テロップを更新" visible="false" />
+									</mx:VBox>
+								</mx:HBox>
+								<svvitch:PlaylistEditor id="playlistEditor"
+									dataProvider="{_playlist.item}" width="480" height="242"
+									change="selectContent(event)" />
+								<mx:HBox width="100%">
+									<mx:Spacer width="100%"/>
+									<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
+								</mx:HBox>
+							</mx:VBox>
+							<!-- mx:VBox width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
+								<mx:DateField />
+							</mx:VBox -->
+						</mx:TabNavigator>
+						<mx:Panel title="ショートカット" width="100%">
+							<svvitch:ShortcutList id="shortcutList"
+									dataProvider="{_workspace.shortcuts.item}" width="480" height="100" />
+							<mx:HBox width="100%">
+								<mx:Spacer width="100%"/>
+								<mx:Button id="deleteShortcutButton" label="－"  click="deleteShorcut(event)" />
+							</mx:HBox>
+						</mx:Panel>
+					</mx:VBox>
+				</mx:HBox>
+				<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
+					<mx:Label id="status" text="ステータス" styleName="statusText" />					
+				</mx:HBox>				
 			</mx:VBox>
 		</mx:HBox>
 	</mx:ViewStack>
 	<mx:HRule width="100%" alpha="0.5" />
-	<mx:Label width="100%" text="copyright(c)2009-2010 www.loopsketch.com allrights reserved." textAlign="center" />
+	<mx:Label width="100%" text="copyright(c)2009-2010 www.loopsketch.com allrights reserved." styleName="footerText" />
 	<!-- コード -->
 	<mx:Script><![CDATA[
 		import flash.display.Sprite;
@@ -387,6 +430,11 @@
 		private var _uploader:UploadProgressBar;
 
 		private var _shadowFilter:DropShadowFilter;		
+
+		private var _stopWatchTimer:Timer = null;
+		//private var _activeStopWatch:Boolean = false;
+		private var _watchLast:Number = 0;
+		private var _watchElapsed:Number = 0;
 
 
 		// 初期化
@@ -766,6 +814,35 @@
 			sendToURL(request);
 			trace("kido: " + luminance.value);
 		}
+
+
+		/** ストップウォッチ */
+		private final function actionStopWatch(event:Event):void {
+			if (_stopWatchTimer == null) {
+				_stopWatchTimer = new Timer(1000, 0);
+				_stopWatchTimer.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+					var now:Number = new Date().time;
+					_watchElapsed += (now - _watchLast);
+					_watchLast = now;
+					var elapsed:int = _watchElapsed / 1000;
+					watchTime.text = SwitchUtils.format(elapsed / 3600, 2) + ":" + SwitchUtils.format(elapsed / 60, 2) + ":" + SwitchUtils.format(elapsed % 60, 2);
+				});
+				_watchLast = new Date().time;
+				_stopWatchTimer.start();
+				watchButton.label = "停止";
+			} else {
+				_stopWatchTimer.stop();
+				_stopWatchTimer = null;
+				watchButton.label = "開始";
+			}
+		}
+
+		/** ストップウォッチ リセット */
+		private final function resetStopWatch():void {
+			_watchElapsed = 0;
+			watchTime.text = "00:00:00";
+		}
+
 
 		/** 編集モード変更 */
 		private final function toggleEditMode(event:Event):void {
