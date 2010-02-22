@@ -199,8 +199,9 @@
 					<mx:TextArea id="displayDescription" width="100%" />
 				</mx:FormItem>
 				<mx:HBox width="100%" horizontalAlign="right">
-					<mx:Button label="add" click="addDisplay();" />
-					<mx:Button label="delete" click="deleteDisplayItem();" />							
+					<mx:Button label="add" click="addDisplay()" />
+					<mx:Button label="export" click="exportWorkspace()" />
+					<mx:Button label="delete" click="deleteDisplayItem()" />
 				</mx:HBox>
 				<mx:DataGrid id="displayGrid" width="100%" height="300" dataProvider="{_displays.display}"
 					verticalScrollPolicy="on" sortableColumns="false"
@@ -345,8 +346,8 @@
 					</mx:VBox>
 				</mx:HBox>
 				<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
-					<mx:Label id="status" text="ステータス" styleName="statusText" />					
-				</mx:HBox>				
+					<mx:Label id="statusText" text="" styleName="statusText" />					
+				</mx:HBox>
 			</mx:VBox>
 		</mx:HBox>
 	</mx:ViewStack>
@@ -360,6 +361,7 @@
 		import flash.events.IOErrorEvent;
 		import flash.events.MouseEvent;
 		import flash.events.TimerEvent;
+		import flash.filesystem.File;
 		import flash.net.URLLoader;  
 		import flash.net.URLRequest;  
 		import flash.net.URLVariables;
@@ -601,23 +603,52 @@
 			trace('display: ' + _displays.display.length);
 		}
 
+		/** エクスポート処理 */
+		private final function exportWorkspace():void {
+			var i:int = displayGrid.selectedIndex;
+			if (i != -1) {
+				var directory:File = File.documentsDirectory;
+				directory.addEventListener(Event.SELECT, function(event:Event):void {
+					var dir:File = event.target as File;
+					var dst:File = new File(dir.nativePath + "/switch-datas");
+					var src:File = new File("app-storage:/datas/" + _displays.display[i].address);
+					trace("export: " + src.nativePath + " > " + dst.nativePath);
+					dst.moveToTrash();
+					src.copyToAsync(dst, true);
+					src.addEventListener(Event.COMPLETE, function(event:Event):void {
+						trace("export done");
+						Alert.show("エクスポートが完了しました");
+					});
+					src.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+						trace("failex export I/O error ");
+						Alert.show("エクスポート処理中に異常が発生しました");
+					});
+					Alert.show("エクスポートが終了したらダイアログでお知らせします.");
+				});
+				try {
+					directory.browseForDirectory("エクスポート先のフォルダを選択してください。その下にswitch-datasフォルダが作成されます。");
+				} catch (error:Error) {
+					trace("Failed:", error.message);
+				}
+			} else {
+				Alert.show("エクスポートしたいディスプレイを選択してください");
+			}
+		}
+
 		/** 削除処理 */
 		private final function deleteDisplayItem():void {
 			var i:int = displayGrid.selectedIndex;
 			if (i != -1) {
 				var item:Object = displayGrid.selectedItem;
-				Alert.show("ディスプレイ[" + item.name + "]を削除してよろしいですか？","アラート", Alert.YES | Alert.NO, this, deleteAlertClicked);
-			}
-		}
-
-		/** 削除処理 */
-		private final function deleteAlertClicked(event:CloseEvent):void {
-			if (event.detail == Alert.YES) {
-				var i:int = displayGrid.selectedIndex;
-				if (i != -1) {
-					trace("delete display: " + i);
-					displayGrid.dataProvider.removeItemAt(i);
-				}
+				Alert.show("ディスプレイ[" + item.name + "]を削除してよろしいですか？","アラート", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+					if (event.detail == Alert.YES) {
+						var i:int = displayGrid.selectedIndex;
+						if (i != -1) {
+							trace("delete display: " + i);
+							displayGrid.dataProvider.removeItemAt(i);
+						}
+					}
+				});
 			}
 		}
 
@@ -660,12 +691,22 @@
 			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 				_workspace = new XML(event.target.data);
 				var display:XML = getEditDisplay();
+				saveWorkspaceFile(display);
+
 				mediaSelector.setData(display.address.text(), _workspace.medialist.item);
+				mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+					statusText.text = event.text;
+				});
 				playlistEditor.setData(_workspace);
 				shortcutList.setData(_workspace, baseURL());
 				startPreview(); // 繋がった場合、プレビューの開始
 				startStatus();
-				_mediaSyncronizer = new MediaSyncronizer(display, _workspace.medialist.item);
+				if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
+					_mediaSyncronizer = new MediaSyncronizer(display, _workspace);
+					_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+						statusText.text = event.text;
+					});
+				}
 			});
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace(event);
@@ -1170,30 +1211,26 @@
 
 
 		/** ワークスペースの保存 */
-		private final function saveWorkspace(event:Event):void {
-			var display:XML = null;
-			if (_displays) {
-				for (var i:int = 0; i < _displays.display.length(); i++) {
-					if (_displays.display[i].edit == 'true') {
-						display = _displays.display[i];
-						break;
-					}
-				}
+		private final function saveWorkspaceFile(display:XML):File {
+			var workspace:File = new File("app-storage:/datas/" + display.address + "/workspace.xml");
+			var fs:FileStream = new FileStream();
+			try {
+				fs.open(workspace, FileMode.WRITE);
+				var s:String = '<?xml version="1.0" encoding="UTF-8" ?>\n'; 
+				s += _workspace.toXMLString();
+				fs.writeUTFBytes(s);
+			} catch (error:Error) {
+				trace("<Error> " + error.message);
+			} finally {
+				fs.close();
 			}
-			if (display) {
-				var workspace:File = new File("app-storage:/datas/" + display.address + "/workspace.xml");
-				var fs:FileStream = new FileStream();
-				try {
-					fs.open(workspace, FileMode.WRITE);
-					var s:String = '<?xml version="1.0" encoding="UTF-8" ?>\n'; 
-					s += _workspace.toXMLString();
-					fs.writeUTFBytes(s);
-				} catch (error:Error) {
-					trace("<Error> " + error.message);
-				} finally {
-					fs.close();		
-				}
+			return workspace;
+		}
 
+		private final function saveWorkspace(event:Event):void {
+			var display:XML = getEditDisplay();
+			if (display) {
+				var workspace:File = saveWorkspaceFile(display);
 				var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, UploadProgressBar, true);
 				PopUpManager.centerPopUp(popup);
 				_uploader = popup as UploadProgressBar;
@@ -1208,34 +1245,40 @@
 						trace(error.message);
 					}
 				}
-				_uploader.addFile(workspace.name, workspace);
-				_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {
-					var loader:URLLoader = new URLLoader();
-					loader.addEventListener(Event.COMPLETE, function(event:Event):void {
-						trace("update complete");
-						var loader:URLLoader = URLLoader(event.currentTarget);
-						var json:String = loader.data;
-						try {
-							var result:Object = JSON.decode(json);
-							if (!result.update) {
-								_uploader.setMessage("更新に失敗しました");
-	//							Alert.show("not updated!");
-							} else {
-								mediaSelector.clearUploadFiles();
-								PopUpManager.removePopUp(_uploader);
-								_uploader = null;
-								uneditedWorkspace();
+				if (true) {
+					// 転送処理
+					_uploader.addFile(workspace.name, workspace);
+					_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {
+						var loader:URLLoader = new URLLoader();
+						loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+							trace("update complete");
+							var loader:URLLoader = URLLoader(event.currentTarget);
+							var json:String = loader.data;
+							try {
+								var result:Object = JSON.decode(json);
+								if (!result.update) {
+									_uploader.setMessage("更新に失敗しました");
+								} else {
+									mediaSelector.clearUploadFiles();
+									PopUpManager.removePopUp(_uploader);
+									_uploader = null;
+									uneditedWorkspace();
+								}
+							} catch (error:Error) {
+								trace(error.message + ":" + json);
 							}
-						} catch (error:Error) {
-							trace(error.message + ":" + json);
-						}
+						});
+						loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+							trace('remote display no result');
+						});
+						loader.load(new URLRequest(baseURL() + "/update"));
 					});
-					loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
-						trace('remote display no result');
-					});
-					loader.load(new URLRequest(baseURL() + "/update"));
-				});
-				_uploader.startUpload(baseURL());
+					_uploader.startUpload(baseURL());
+
+				} else {
+					PopUpManager.removePopUp(_uploader);
+					_uploader = null;
+				}
 			}
 		}
 

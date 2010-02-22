@@ -1,6 +1,7 @@
 ﻿package  
 {
 	import flash.events.Event;
+	import flash.events.EventDispatcher;
 	import flash.events.TimerEvent;
 	import flash.events.IOErrorEvent;
 	import flash.events.ProgressEvent;
@@ -23,19 +24,20 @@
 	 *
 	 * @author toru@loopsketch.com
 	 */
-	public class MediaSyncronizer {
+	public class MediaSyncronizer extends EventDispatcher {
 
 		private var _timer:Timer;
 		private var _display:XML = null;
-		private var _media:XMLList = null;
+		private var _workspace:XML = null;
 		private var _mediaSet:Array = null;
+		private var _size:int = 0;
 
 		//private var _cml:CompositeMassLoader;
 
 
-		public function MediaSyncronizer(display:XML, media:XMLList) {
+		public function MediaSyncronizer(display:XML, workspace:XML) {
 			_display = display;
-			_media = media;
+			_workspace = workspace;
 
 			//_cml = new CompositeMassLoader();
 			_timer = new Timer(100, 1);
@@ -56,15 +58,16 @@
 		}
 
 		public final function running():Boolean {
-			return _timer.running || _media != null;
+			return _timer.running || _workspace != null;
 		}
 
 		public final function run(event:TimerEvent):void {
 			trace("thread start");
 			var map:Object = new Object();
-			for (var i:int = 0; i < _media.length(); i++) {
-				var items:XMLList = _media[i].movie;
-				items += _media[i].image;
+			var medias:XMLList = _workspace.medialist.item;
+			for (var i:int = 0; i < medias.length(); i++) {
+				var items:XMLList = medias[i].movie;
+				items += medias[i].image;
 				for (var j:int = 0; j < items.length(); j++) {
 					map[items[j].text()] = "";
 				}
@@ -76,6 +79,7 @@
 				}
 				_mediaSet.push(name);
 			}
+			_size = _mediaSet.length;
 			getFileStatus();
 		}
 
@@ -83,6 +87,8 @@
 		public final function getFileStatus():void {
 			if (_mediaSet.length > 0) {
 				var media:String = _mediaSet.shift();
+				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + media + "チェック中...";
+				dispatchEvent(new OperationStatusEvent(status));
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(baseURL() + "/files?path=" + media);
 				request.useCache = false;
@@ -149,13 +155,31 @@
 				});
 				loader.load(request);
 			} else {
-				trace("cpmplete files");
-				_media = null;
+				trace("complete transfer files");
+				var deletes:XMLList = _workspace.deletes.file;
+				if (deletes.length() > 0) {
+					dispatchEvent(new OperationStatusEvent("不要ファイルの削除処理中..."));
+					for (var i:int = 0; i < deletes.length(); i++) {
+						var name:String = deletes[i].text();
+						if (name.indexOf("switch-data:") == 0) {
+							name = name.substr(12);
+						}
+						var file:File = getFile(name);
+						if (file.exists) {
+							file.deleteFile();
+							trace("delete: " + file.nativePath);
+						}
+					}
+				}
+				dispatchEvent(new OperationStatusEvent("同期完了しました"));
+				_workspace = null;
 			}
 		}
 
 		/** ファイルダウンロード */
 		public final function downloadFile(path:String):void {
+			var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中...";
+			dispatchEvent(new OperationStatusEvent(status));
 			var loader:URLLoader = new URLLoader();
 			loader.dataFormat = URLLoaderDataFormat.BINARY;
 			var request:URLRequest = new URLRequest(baseURL() + "/download?path=" + path);
