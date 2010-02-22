@@ -31,6 +31,9 @@
 						import flash.net.FileReference;
 
 						import mx.controls.Alert;
+						import mx.core.IFlexDisplayObject;
+						import mx.managers.PopUpManager;
+
 
 						/** 編集 */
 						private function edit(event:Event):void {
@@ -43,7 +46,10 @@
 								filter = new FileFilter("動画ファイル(.mp4/.mpg/.mov/.wmv/.avi)", "*.mp4;*.mpg;*.mov;*.wmv;*.avi");
 								browseFile(filter);
 							} else if (name == "text") {
-								
+								var popup:IFlexDisplayObject = PopUpManager.createPopUp(outerDocument as DisplayObject, TextEditor, true);
+								var editor:TextEditor = popup as TextEditor;
+								editor.editItem = outerDocument.mediaItemList.selectedItem;
+								PopUpManager.centerPopUp(popup);
 							} 
 						}
 

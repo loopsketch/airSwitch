@@ -374,6 +374,7 @@
 		import mx.events.DragEvent;
 		import mx.events.FlexEvent;
 		import mx.collections.ArrayCollection;
+		import mx.events.CollectionEvent;
 		import mx.events.DataGridEvent;
 		import mx.core.IUIComponent;
 		import mx.core.IFlexDisplayObject;
@@ -467,13 +468,13 @@
 				}				
 			}
 			addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
-			playlistSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
-			mediaSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
-			playlistEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
+			//playlistSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
+			//mediaSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
+			//playlistEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			initDisplayConfig();
 		}
 
-		public final function editedWorkspace(event:EditedWorkspaceEvent):void {
+		public final function editedWorkspace(event:Event):void {
 			_editedDisplay = true;
 			editedSign.text = "*";
 			saveButton.setStyle("fillColors", [0xe66666, 0xff6666]);
@@ -697,7 +698,9 @@
 				mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 					statusText.text = event.text;
 				});
+				mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 				playlistEditor.setData(_workspace);
+				playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 				shortcutList.setData(_workspace, baseURL());
 				startPreview(); // 繋がった場合、プレビューの開始
 				startStatus();
