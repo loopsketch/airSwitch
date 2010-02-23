@@ -1,8 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
 	title="テキスト編集" showCloseButton="false"
-	width="600" close="{onClose()}" creationComplete="init()">
+	width="600" close="{onClose()}" creationComplete="init()" horizontalAlign="center">
+	<mx:Style>
+		.statusText {
+			color: #33cc33;
+			font-size: 11px;
+		}
+	</mx:Style>
 	<mx:HRule width="100%" alpha="0.2" />
+	<mx:Label id="position" text="" styleName="statusText" />
+	<mx:Canvas id="preview" backgroundColor="#000000" width="580" height="50" />
 	<mx:Form id="textEditForm" width="100%" height="100%">
 		<mx:FormItem label="テキストパラメータ" >
 			<mx:TextInput id="inputParams" width="450" text="" />
@@ -13,24 +21,70 @@
 		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
 	</mx:HBox>
 	<mx:Script><![CDATA[
+		import flash.events.MouseEvent;
+		import flash.filesystem.File;
+		import mx.controls.Image;
 		import mx.managers.PopUpManager;
 
-		private var _item:XML = null;
+		private var _selector:MediaSelector;
+		private var _editItem:XML = null;
+		private var _index:int;
 
-		public final function set editItem(item:Object):void {
-			if (item is XML) {
-				_item = item as XML;
+		public final function editItem(selector:MediaSelector, editItem:Object, i:int):void {
+			_selector = selector;
+			if (editItem is XML) {
+				_editItem = editItem as XML;
 			}
+			_index = i;
 		}
 
 		private final function init():void {
-			inputParams.text = _item.text();
+			var loader:Loader = new Loader();
+			with (loader.contentLoaderInfo) {
+				addEventListener(Event.COMPLETE, updatePreviewImage);
+				addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+					trace('failed sample image');
+					event.target.loader.unload();
+				});
+			}
+			var list:XMLList = _editItem.children();
+			var i:int = _index;
+			while (i >= 0 && list[i].name() != 'image') {
+				trace('pass ' + list[i]);
+				i--;
+			}
+			if (i >= 0) {
+				// 指定pathの"switch-data:"は除去して処理
+				var f:File = _selector.getFile(list[i].text());
+				trace('image: ' + f.nativePath);
+				loader.load(new URLRequest(f.nativePath));
+			}
+			inputParams.text = list[_index].text();
 		}
 
+		private final function updatePreviewImage(event:Event):void {
+			trace('update sample image');
+			var image:Image = new Image();
+			//image.width = 240;
+			//image.height = 180;
+			//image.setStyle("horizontalAlign", "center");
+			//image.setStyle("verticalAlign", "center");
+			//image.setStyle("removedEffect", "Fade");
+			image.load(event.target.content); // イメージの更新
+			image.addEventListener(MouseEvent.MOUSE_MOVE, function(event:MouseEvent):void {
+				position.text = event.localX + "," + event.localY;
+			});
+			preview.addChildAt(image, 0);
+			event.target.loader.unload();
+			//if (preview.getChildren().length >= 2) {
+			//	preview.removeChildAt(1);
+			//}
+		}
 
 		/** 更新 */
 		private final function onUpdate():void {
-			_item.setChildren(inputParams.text);
+			var list:XMLList = _editItem.children();
+			list[_index].setChildren(inputParams.text);
 			onClose();
 		}
 

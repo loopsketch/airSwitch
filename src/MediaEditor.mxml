@@ -48,7 +48,7 @@
 							} else if (name == "text") {
 								var popup:IFlexDisplayObject = PopUpManager.createPopUp(outerDocument as DisplayObject, TextEditor, true);
 								var editor:TextEditor = popup as TextEditor;
-								editor.editItem = outerDocument.mediaItemList.selectedItem;
+								editor.editItem(outerDocument.selector, outerDocument._item, outerDocument.mediaItemList.selectedIndex);
 								PopUpManager.centerPopUp(popup);
 							} 
 						}
