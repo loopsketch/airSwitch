@@ -287,7 +287,7 @@
 								</mx:HBox>
 								<svvitch:PlaylistSelector id="playlistSelector" dragEnabled="true"
 									dataProvider="{_workspace.playlists.playlist}" width="250" height="572"
-									change="changePlaylist(event)" />
+									change="changePlaylist()" />
 							</mx:VBox>
 							<mx:VBox id="mediaTab" label="メディア" paddingLeft="4" paddingRight="4" paddingBottom="4">
 								<mx:HBox width="100%" verticalAlign="middle">
@@ -325,7 +325,7 @@
 								</mx:HBox>
 								<svvitch:PlaylistEditor id="playlistEditor"
 									dataProvider="{_playlist.item}" width="480" height="242"
-									change="selectContent(event)" />
+									change="selectContent()" />
 								<mx:HBox width="100%">
 									<mx:Spacer width="100%"/>
 									<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
@@ -701,7 +701,7 @@
 				mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 				playlistEditor.setData(_workspace);
 				playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
-				shortcutList.setData(_workspace, baseURL());
+				shortcutList.setData(_workspace, baseURL(), setPlaylist);
 				startPreview(); // 繋がった場合、プレビューの開始
 				startStatus();
 				if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
@@ -933,14 +933,27 @@
 		}
 
 		/** プレイリスト変更 */
-		private final function changePlaylist(event:Event):void {
+		public final function setPlaylist(id:String):void {
+			var playlists:XMLList = _workspace.playlists.playlist.(@id == id);
+			if (playlists.length() > 0) {
+				_playlist = playlists[0];
+				viewPlaylist();
+			}
+		}
+
+		private final function changePlaylist():void {
 			//trace("change playlist");
 			_playlist = playlistSelector.selectedItem as XML;
+			viewPlaylist();
+		}
+
+		private final function viewPlaylist():void {
 			if (_playlist.@color) {
 				colorPicker.selectedColor = parseInt(_playlist.@color.toString(), 16);
 			} else {
 				colorPicker.selectedColor = 0x111111;		
 			}
+			playlistName.text = _playlist.@name;
 			var useText:Boolean = false;
 			var items:XMLList = _playlist.item;
 			for (var i:int = 0; i < items.length(); i++) {
@@ -959,7 +972,7 @@
 					var text:String = result['text'];
 					if (text && _playlist.@text != text) {
 						playlistText.text = text;
-						_playlist.@text = text;						
+						//_playlist.@text = text;						
 					}
 				});
 				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
@@ -983,11 +996,11 @@
 				textUpdateButton.visible = false;
 			}
 			//textUpdateButton.visible = false;
-			selectContent(event);
+			selectContent();
 		}
 
 		/** コンテンツ選択 */
-		private final function selectContent(event:Event):void {
+		private final function selectContent():void {
 			// trace("select content");
 			if (!_editable) {
 				var request:URLRequest = new URLRequest(baseURL() + "/set/playlist");
@@ -1064,7 +1077,7 @@
 					var result:Object = JSON.decode(json);
 					if (result.text != null) {
 						trace("text: " + result.text);
-						selectContent(null);
+						selectContent();
 					} else {
 						Alert.show("not set playlist text!");						
 					}

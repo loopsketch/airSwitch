@@ -12,13 +12,14 @@
 						}
 
 						public final function selectContent():void {
-							var params:URLVariables = new URLVariables();
-							params.pl = data.@id.toString();
-							var request:URLRequest = new URLRequest(outerDocument._baseURL + "/set/playlist");
-							request.method = URLRequestMethod.POST;
-							request.data = params;
-							sendToURL(request);
+							//var params:URLVariables = new URLVariables();
+							//params.pl = data.@id.toString();
+							//var request:URLRequest = new URLRequest(outerDocument._baseURL + "/set/playlist");
+							//request.method = URLRequestMethod.POST;
+							//request.data = params;
+							//sendToURL(request);
 							trace("shortcut: " + data.@id);
+							outerDocument.onSelect(data.@id);
 						}
 					]]></mx:Script>
 					<mx:Button label="{getName(data)}" width="90" click="selectContent()" />
@@ -27,15 +28,23 @@
 		</mx:Component>
 	</mx:itemRenderer>
 	<mx:Script><![CDATA[
+		import mx.controls.listClasses.ListBase;
 		import mx.managers.DragManager;
 		import mx.events.DragEvent;
 
 		public var _baseURL:String;
 		public var _workspace:XML;
 
-		public final function setData(workspace:XML, baseURL:String):void {
+		private var _selectCallBack:Function;
+
+		public final function get onSelect():Function {
+			return _selectCallBack;
+		}
+
+		public final function setData(workspace:XML, baseURL:String, selectCallBack:Function):void {
 			_workspace = workspace;
 			_baseURL = baseURL;
+			_selectCallBack = selectCallBack;
 		}
 
 		private final function checkDragEvent(event:DragEvent):Boolean {
