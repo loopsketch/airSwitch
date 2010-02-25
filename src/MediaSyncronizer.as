@@ -11,6 +11,7 @@
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.net.URLLoaderDataFormat;
+	import flash.net.URLStream;
 	import mx.controls.Alert;
 
 	import com.adobe.crypto.MD5;
@@ -176,36 +177,36 @@
 			}
 		}
 
+			//try {
+			//	trace("stored: " + path);
+			//} catch (error:Error) {
+			//	trace("failed write file: " + error.message);
+			//}
 		/** ファイルダウンロード */
 		public final function downloadFile(path:String):void {
 			var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中...";
 			dispatchEvent(new OperationStatusEvent(status));
-			var loader:URLLoader = new URLLoader();
-			loader.dataFormat = URLLoaderDataFormat.BINARY;
+			var stream:URLStream = new URLStream();
 			var request:URLRequest = new URLRequest(baseURL() + "/download?path=" + path);
-			request.useCache = false;
-			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
-				var fs:FileStream = new FileStream();
-				var file:File = new File("app-storage:/datas/" + _display.address + "/" + path);
-				try {
-					fs.open(file, FileMode.WRITE);
-					fs.writeBytes(event.target.data);
-					trace("stored: " + path);
-				} catch (error:Error) {
-					trace("failed write file: " + error.message);
-				}
+			var fs:FileStream = new FileStream();
+			var file:File = new File("app-storage:/datas/" + _display.address + "/" + path);
+			fs.open(file, FileMode.WRITE);
+			var buf:ByteArray = new ByteArray();
+			stream.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
+				buf.clear();
+				if (stream.connected) stream.readBytes(buf);
+				fs.writeBytes(buf);
+			});
+			stream.addEventListener(Event.COMPLETE, function(event:Event):void {
+				stream.close();
 				fs.close();
 				getFileStatus();
 			});
-			//loader.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
-			//	trace(event.bytesLoaded + "/" + event.bytesTotal);
-			//});
-
-			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+			stream.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace("I/O error: " + event);
 				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中に異常が発生しました.";
 			});
-			loader.load(request);
+			stream.load(request);
 		}
 	}
 }
