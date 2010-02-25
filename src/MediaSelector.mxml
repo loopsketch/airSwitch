@@ -19,6 +19,7 @@
 									popup = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
 									var editor:MediaEditor = popup as MediaEditor;
 									editor.selector = outerDocument;
+									editor.workspace = outerDocument.workspace;
 									editor.baseItem = item;
 								//} else {
 								//	popup = PopUpManager.createPopUp(Application.application as DisplayObject, PreviewWindow, true);
@@ -55,10 +56,15 @@
 		import mx.controls.Alert;
 		import mx.events.DragEvent;
 		import mx.managers.DragManager;
+		import mx.managers.CursorManager;  
 
 		private var _address:String;
-		private var _baseData:XMLList;
+		private var _workspace:XML;
 		private var _uploadFiles:Object = {};
+
+		public final function get workspace():XML {
+			return _workspace;
+		}
 
 		private final function init():void {
 			addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, nativeDragEnterHandler);
@@ -66,10 +72,10 @@
 		}
 
 		/** データセット */
-		public final function setData(address:String, data:XMLList):void {
+		public final function setData(address:String, workspace:XML):void {
 			_address = address;
-			_baseData = data;
-			dataProvider = data;
+			_workspace = workspace;
+			dataProvider = workspace.medialist.item;
 			_uploadFiles = {};
 		}
 
@@ -80,18 +86,22 @@
 
 		/** アップロードファイル追加 */
 		public final function addUploadFile(path:String, file:File):Boolean {
+			// 時計カーソル セット
+			CursorManager.setBusyCursor();
 			var dst:File = new File("app-storage:/temp/" + _address + "/media/" + file.name); 
+			var result:Boolean = false;
 			try {
 				file.parent.createDirectory();
 				file.copyTo(dst, true);
 				trace("copy: " + dst.nativePath);
 				_uploadFiles[path] = dst;
 				dispatchEvent(new OperationStatusEvent(file.name + "を作業領域にコピーしました"));
-				return true;
+				result = true;
 			} catch (error:Error) {
 				trace("Error:", error.message);
 			}
-			return false;
+			CursorManager.removeBusyCursor();
+			return result;
 		}
 
 		/** アップロードファイル削除 */
@@ -165,8 +175,8 @@
 		/** アイテム追加 */
 		private final function addFileItemAt(pos:int, file:File):void {
 			// 同じファイル登録の検出
-			var items:XMLList = _baseData.image.(text() == "switch-data:/media/" + file.name);
-			items += _baseData.movie.(text() == "switch-data:/media/" + file.name);
+			var items:XMLList = _workspace.medialist.item.image.(text() == "switch-data:/media/" + file.name);
+			items += _workspace.medialist.item.movie.(text() == "switch-data:/media/" + file.name);
 			if (items.length() > 0) {
 				Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
 				return;
@@ -174,7 +184,7 @@
 
 			if (addUploadFile("/media/" + file.name, file)) {
 				var item:XML = <item />;
-				item.@id = SwitchUtils.createNewID(_baseData, "m");
+				item.@id = SwitchUtils.createNewID(_workspace.medialist.item, "m");
 				if (SwitchUtils.checkImageFileExt(file.name)) {
 					item.@type = "image";
 					item.appendChild(<image />);

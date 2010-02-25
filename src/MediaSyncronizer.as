@@ -203,6 +203,7 @@
 
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace("I/O error: " + event);
+				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中に異常が発生しました.";
 			});
 			loader.load(request);
 		}

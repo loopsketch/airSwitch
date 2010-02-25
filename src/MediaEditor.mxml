@@ -96,7 +96,7 @@
 										item.setChildren("switch-data:/media/" + file.name);
 									}
 									outerDocument.selector.addUploadFile("/media/" + file.name, file);
-									trace("selected: " + file.name);									
+									trace("selected: " + file.name);
 								}
 							});
 							file.browse([filter, allFilter]);
@@ -188,12 +188,14 @@
 				_item.@duration = duration.text;
 				selector.dataProvider.addItem(_item);
 				trace("add item: " + _item.toXMLString());
+				//selector.dispatchEvent(new OperationStatusEvent(_item.@name + "を追加しました"));
 			} else {
 				// 修正
 				baseItem.@name = mediaName.text;
 				baseItem.@duration = duration.text;
 				baseItem.setChildren(_item.children());
 				trace("edit item: " + baseItem.toXMLString());
+				//selector.dispatchEvent(new OperationStatusEvent(baseItem.@name + "を修正しました"));
 			}
 			onClose();
 		}

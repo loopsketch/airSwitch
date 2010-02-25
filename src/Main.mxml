@@ -455,6 +455,7 @@
 			// フルスクリーンの指定
 			// systemManager.stage.displayState = StageDisplayState.FULL_SCREEN_INTERACTIVE;
 
+			// テンポラリのクリア
 			var temp:File = new File("app-storage:/temp/");
 			if (temp.exists) {
 				var files:Array = temp.getDirectoryListing();
@@ -694,7 +695,7 @@
 				var display:XML = getEditDisplay();
 				saveWorkspaceFile(display);
 
-				mediaSelector.setData(display.address.text(), _workspace.medialist.item);
+				mediaSelector.setData(display.address.text(), _workspace);
 				mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 					statusText.text = event.text;
 				});
@@ -1118,7 +1119,7 @@
 				var pattern:RegExp = new RegExp(findPlaylist.text, "i");
 				playlistSelector.dataProvider.filterFunction = function(item:Object):Boolean {
 					return pattern.test(item.@name.toString());
-				}				
+				}
 			} else {
 				playlistSelector.dataProvider.filterFunction = null;
 			}
