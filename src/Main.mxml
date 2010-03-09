@@ -1229,6 +1229,19 @@
 
 		/** ワークスペースの保存 */
 		private final function saveWorkspaceFile(display:XML):File {
+			if (_workspace.deletes.length() > 0) {
+				var items:XMLList = _workspace.medialist.item;
+				var files:XMLList = _workspace.deletes.file;
+				for (var i:int = 0; i < files.length(); i++) {
+					var path:String = files[i].text();
+					var datas:XMLList = items.image.(text() == path);
+					datas += items.movie.(text() == path);
+					if (datas.length() > 0) {
+						delete files[i];
+					}
+				}
+			}
+			
 			var workspace:File = new File("app-storage:/datas/" + display.address + "/workspace.xml");
 			var fs:FileStream = new FileStream();
 			try {

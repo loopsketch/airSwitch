@@ -72,15 +72,17 @@
 								var datas:XMLList = items.image.(text() == "switch-data:/media/" + file.name);
 								datas += items.movie.(text() == "switch-data:/media/" + file.name);
 								if (datas.length() > 0) {
-									Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
-									useFile = false;
+									trace("already registed " + file.name);
+									//Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
+									//useFile = false;
 								}
 								if (useFile) {
 									var key:String = item.text();
+									var path:String = "switch-data:/media/" + file.name;
 									if (key.indexOf("%%") == 0) {
 										for each (var data:XML in outerDocument.mediaItemList.dataProvider) {
 											if (data.text() == key) {
-												data.setChildren("switch-data:/media/" + file.name);
+												data.setChildren(path);
 											}
 										}
 									} else {
@@ -91,12 +93,15 @@
 											if (child[i].text() == old) used++;
 										}
 										if (used == 0 || (used == 1 && item.text() == old)) {
+											// 使用されていないか、選択中のアイテムでの使用なら古い素材を削除する
 											outerDocument.selector.removeUploadFile(old);
+											outerDocument.oldFiles.push(old);
 										}
-										item.setChildren("switch-data:/media/" + file.name);
+										item.setChildren(path);
 									}
+									outerDocument.editFiles.push(path);
 									outerDocument.selector.addUploadFile("/media/" + file.name, file);
-									trace("selected: " + file.name);
+									trace("selected: " + file.nativePath);
 								}
 							});
 							file.browse([filter, allFilter]);
@@ -143,6 +148,9 @@
 		public var workspace:XML;
 		public var selector:MediaSelector;
 		public var baseItem:XML = null;
+
+		public var editFiles:Array = [];
+		public var oldFiles:Array = [];
 
 		[Bindable]
 		public var _item:XML;
@@ -196,18 +204,25 @@
 				baseItem.setChildren(_item.children());
 				trace("edit item: " + baseItem.toXMLString());
 				//selector.dispatchEvent(new OperationStatusEvent(baseItem.@name + "を修正しました"));
+				if (oldFiles.length > 0) {
+					if (workspace.deletes.length() == 0) {
+						workspace.appendChild(<deletes />);
+					}
+					var path:String;
+					while ((path = oldFiles.pop()) != null) {
+						var data:XML = <file />;
+						data.@date = SwitchUtils.formatDate(new Date());
+						data.setChildren(path);
+						workspace.deletes.appendChild(data);
+					}
+				}
 			}
+			editFiles = [];
 			onClose();
 		}
 
 		/** クローズ処理 */
 		private final function onClose():void {
-			var child:XMLList = _item.children();
-			for (var i:int = 0; i < child.length(); i++ ) {
-				if (child[i].text().indexOf("%%") != 0) {
-					selector.removeUploadFile(child[i].text());
-				}
-			}
 			PopUpManager.removePopUp(this);
 		}
 	]]></mx:Script>

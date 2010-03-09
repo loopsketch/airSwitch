@@ -98,7 +98,7 @@
 				dispatchEvent(new OperationStatusEvent(file.name + "を作業領域にコピーしました"));
 				result = true;
 			} catch (error:Error) {
-				trace("Error:", error.message);
+				trace(error.getStackTrace());
 			}
 			CursorManager.removeBusyCursor();
 			return result;
@@ -196,7 +196,11 @@
 					item.movie.setChildren("switch-data:/media/" + file.name);
 				}
 				item.@name = file.name.substring(0, file.name.lastIndexOf("."));
-				dataProvider.addItemAt(item, pos);
+				if (dataProvider.length > pos) {
+					dataProvider.addItemAt(item, pos);
+				} else {
+					dataProvider.addItem(item);
+				}
 				trace("drop[" + pos + "] <" + item.@id + "> " + file.name);				
 			}
 		}

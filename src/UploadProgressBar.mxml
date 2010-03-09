@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
 	title="ファイル更新" showCloseButton="false"
-	width="400" height="150" close="{onClose()}" creationComplete="init()">
+	width="400" height="160" close="{onClose()}" creationComplete="init()">
 	<mx:HRule width="100%" alpha="0.2" />
 	<mx:VBox width="100%">
 		<mx:Label id="message" />
