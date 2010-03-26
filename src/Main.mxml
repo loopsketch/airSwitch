@@ -352,7 +352,10 @@
 		</mx:HBox>
 	</mx:ViewStack>
 	<mx:HRule width="100%" alpha="0.5" />
-	<mx:Label width="100%" text="copyright(c)2009-2010 www.loopsketch.com allrights reserved." styleName="footerText" />
+	<!--
+	<mx:Label width="100%" text="copyright(c)2009-{_year} {_copyright} allrights reserved." styleName="footerText" />
+	-->
+	<mx:Label width="100%" text="" styleName="footerText" />
 	<!-- コード -->
 	<mx:Script><![CDATA[
 		import flash.display.Sprite;
@@ -407,6 +410,8 @@
 		// (vista) C:\Users\username\AppData\Roaming\appId\Local Store
 		private const DISPLAY_FILE:File = new File("app-storage:/displays.xml"); 
 
+		[Bindable] public var _year:int = new Date().getFullYear();
+		[Bindable] public var _copyright:String = "";
 		[Bindable] public var _displays:XML = <displays />;
 		[Bindable] public var _workspace:XML = <workspace />;
 		[Bindable] public var _playlist:XML = <playlist />;
