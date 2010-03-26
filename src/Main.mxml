@@ -240,7 +240,7 @@
 					<mx:Label text="{_nextContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />
 					<mx:Label text="トランジション:" paddingTop="8" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
-					<mx:ToggleButtonBar id="transition" horizontalGap="1" paddingTop="2">
+					<mx:ToggleButtonBar id="transition" horizontalGap="1" paddingTop="2" >
 						<mx:dataProvider>
 							<mx:Object toolTip="OFF" />
 							<mx:Object toolTip="スライド" label="Slide" />
@@ -249,7 +249,7 @@
 					</mx:ToggleButtonBar>
 					<mx:Label text="遷移アクション:" styleName="titleText" />
 					<mx:HRule width="235" alpha="0.5" />
-					<mx:ToggleButtonBar id="action" horizontalGap="1" paddingTop="2">
+					<mx:ToggleButtonBar id="action" horizontalGap="1" paddingTop="2" >
 						<mx:dataProvider>
 							<mx:Object toolTip="次へ" />
 							<mx:Object toolTip="最終フレームで停止" label="St" />
@@ -840,7 +840,13 @@
 				//		trace(playlists[i].toXMLString());
 				//	}
 				//}
-				swButton.enabled = (_preparedContent != null && _preparedContent.length > 0) || (_nextContent != null && _nextContent.length > 0);
+				if ((_preparedContent != null && _preparedContent.length > 0) || (_nextContent != null && _nextContent.length > 0)) {
+					swButton.setStyle("fillColors", [0x66e666, 0x66ff66]);
+					swButton.enabled = true;
+				} else {
+					swButton.setStyle("fillColors", [0xe6eeee, 0xffffff]);
+					swButton.enabled = false;
+				}
 			} catch (error:Error) {
 				trace(error.message + ":" + json);
 			}
