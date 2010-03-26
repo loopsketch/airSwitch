@@ -225,7 +225,7 @@
 				<mx:Canvas id="preview" backgroundColor="#000000" width="240" height="180">
 				</mx:Canvas>
 				<mx:HBox width="240" verticalAlign="middle">
-					<mx:HSlider id="luminance" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="{_luminance}" change="changeLuminance(event)" />
+					<mx:HSlider id="brightness" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="{_brightness}" change="changeBrightness(event)" />
 					<mx:Image source="{_iconBrightness}" width="24" height="24" toolTip="輝度設定" />
 				</mx:HBox>
 				<mx:VBox width="240" backgroundColor="#000000" paddingLeft="1" verticalGap="1">
@@ -422,7 +422,7 @@
 		[Bindable] public var _nextContent:String = "";
 		[Bindable] public var _preparedPlaylist:String = "";
 		[Bindable] public var _preparedContent:String = "";
-		[Bindable] public var _luminance:int = 50;
+		[Bindable] public var _brightness:int = 50;
 		private var _action:String;
 		private var _transition:String;
 
@@ -807,7 +807,7 @@
 				_nextContent = status['next-content'];
 				_preparedPlaylist = status['prepared-playlist'];
 				_preparedContent = status['prepared-content'];
-				if (status['luminance']) _luminance = status['luminance'];
+				if (status['brightness']) _brightness = status['brightness'];
 				if (_action != status['action']) {
 					_action = status['action'];
 					if (_action == 'stop') {
@@ -861,14 +861,14 @@
 
 
 		/** 輝度変更 */
-		private final function changeLuminance(event:Event):void {
-			var request:URLRequest = new URLRequest(baseURL() + "/set/luminance");
+		private final function changeBrightness(event:Event):void {
+			var request:URLRequest = new URLRequest(baseURL() + "/set/brightness");
 			request.method = URLRequestMethod.POST;
 			var params:URLVariables = new URLVariables();
-			params.v = luminance.value;
+			params.v = brightness.value;
 			request.data = params;
 			sendToURL(request);
-			trace("kido: " + luminance.value);
+			trace("brightness: " + brightness.value);
 		}
 
 
