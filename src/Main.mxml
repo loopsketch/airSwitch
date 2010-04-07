@@ -447,6 +447,7 @@
 
 		// 初期化
 		private final function init():void {
+			firstConfig();
 			_shadowFilter = new DropShadowFilter();
 			_shadowFilter.color = 0x000000;
 			_shadowFilter.alpha = 0.4;
@@ -478,6 +479,34 @@
 			//mediaSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			//playlistEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			initDisplayConfig();
+		}
+
+		private final function firstConfig():void {
+			var configXML:File = new File("app-storage:/config.xml");
+			if (configXML.exists) {
+				var fs:FileStream = new FileStream();
+				try {
+					fs.open(configXML, FileMode.READ);
+					var text:String = fs.readUTFBytes(fs.bytesAvailable);
+					var xml:XML = XML(text);
+					xml.work.text();
+				} catch (error:Error) {
+					trace("<Error> " + error.message);
+				} finally {
+					fs.close();		
+				}
+
+			} else {
+				var directory:File = File.documentsDirectory;
+				directory.addEventListener(Event.SELECT, function(event:Event):void {
+					var dir:File = event.target as File;
+				});
+				try {
+					directory.browseForDirectory("作業用のフォルダを設定してください。");
+				} catch (error:Error) {
+					trace("Failed:", error.message);
+				}
+			}
 		}
 
 		public final function editedWorkspace(event:Event):void {
