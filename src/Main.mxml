@@ -497,6 +497,7 @@
 					fs.close();		
 				}
 			}
+			trace("work directory: " + _workDir.nativePath);
 		}
 
 		public final function editedWorkspace(event:Event):void {
@@ -566,7 +567,7 @@
 			if (_displays.display.length() == 0) {
 				var fs:FileStream = new FileStream();
 				try {
-					var displayFile:File = _workDir.resolvePath("display.xml");
+					var displayFile:File = _workDir.resolvePath("displays.xml");
 					fs.open(displayFile, FileMode.READ);
 					var xml:String = fs.readUTFBytes(fs.bytesAvailable);
 					_displays = XML(xml);
@@ -682,7 +683,7 @@
 		/** ディスプレイ情報保存 */
 		private final function saveDisplay():void {
 			trace('save displays');
-			var displayFile:File = _workDir.resolvePath("display.xml");
+			var displayFile:File = _workDir.resolvePath("displays.xml");
 			SwitchUtils.saveXML(_displays, displayFile);
 		}
 
