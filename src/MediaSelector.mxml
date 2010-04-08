@@ -26,6 +26,7 @@
 								//	var preview:PreviewWindow = popup as PreviewWindow;
 								//	preview.baseURL = outerDocument.baseURL;
 								//	preview.item = item;
+								// preview.workDir = _workDir;
 								}
 								PopUpManager.centerPopUp(popup);
 							}
@@ -56,8 +57,9 @@
 		import mx.controls.Alert;
 		import mx.events.DragEvent;
 		import mx.managers.DragManager;
-		import mx.managers.CursorManager;  
+		import mx.managers.CursorManager;
 
+		private var _workDir:File;
 		private var _address:String;
 		private var _workspace:XML;
 		private var _uploadFiles:Object = {};
@@ -72,7 +74,8 @@
 		}
 
 		/** データセット */
-		public final function setData(address:String, workspace:XML):void {
+		public final function setData(workDir:File, address:String, workspace:XML):void {
+			_workDir = workDir;
 			_address = address;
 			_workspace = workspace;
 			dataProvider = workspace.medialist.item;
@@ -88,7 +91,7 @@
 		public final function addUploadFile(path:String, file:File):Boolean {
 			// 時計カーソル セット
 			CursorManager.setBusyCursor();
-			var dst:File = new File("app-storage:/temp/" + _address + "/media/" + file.name); 
+			var dst:File = _workDir.resolvePath("temp/" + _address + "/media/" + file.name); 
 			var result:Boolean = false;
 			try {
 				file.parent.createDirectory();
@@ -127,9 +130,9 @@
 
 		public final function getFile(path:String):File {
 			if (path.indexOf("switch-data:") == 0) {
-				var f:File = new File("app-storage:/datas/" + _address + path.substring(12));
+				var f:File = _workDir.resolvePath("datas/" + _address + path.substring(12));
 				if (!f.exists) {
-					f = new File("app-storage:/temp/" + _address + path.substring(12));
+					f = _workDir.resolvePath("temp/" + _address + path.substring(12));
 				}
 				return f;
 			}

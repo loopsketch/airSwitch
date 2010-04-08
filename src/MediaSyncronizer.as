@@ -28,6 +28,7 @@
 	public class MediaSyncronizer extends EventDispatcher {
 
 		private var _timer:Timer;
+		private var _workDir:File = null;
 		private var _display:XML = null;
 		private var _workspace:XML = null;
 		private var _mediaSet:Array = null;
@@ -36,7 +37,8 @@
 		//private var _cml:CompositeMassLoader;
 
 
-		public function MediaSyncronizer(display:XML, workspace:XML) {
+		public function MediaSyncronizer(workDir:File, display:XML, workspace:XML) {
+			_workDir = workDir;
 			_display = display;
 			_workspace = workspace;
 
@@ -55,7 +57,7 @@
 
 		/** 保存ファイル取得 */
 		private final function getFile(path:String):File {
-			return new File("app-storage:/datas/" + _display.address + "/" + path);			
+			return _workDir.resolvePath("datas/" + _display.address + "/" + path);			
 		}
 
 		public final function running():Boolean {
@@ -189,7 +191,7 @@
 			var stream:URLStream = new URLStream();
 			var request:URLRequest = new URLRequest(baseURL() + "/download?path=" + path);
 			var fs:FileStream = new FileStream();
-			var file:File = new File("app-storage:/datas/" + _display.address + "/" + path);
+			var file:File = _workDir.resolvePath("datas/" + _display.address + "/" + path);
 			fs.open(file, FileMode.WRITE);
 			var buf:ByteArray = new ByteArray();
 			stream.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {

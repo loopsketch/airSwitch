@@ -408,7 +408,8 @@
 
 		// (xp) C:\Documents and Settings\username\Application Data\appId\Local Store
 		// (vista) C:\Users\username\AppData\Roaming\appId\Local Store
-		private const DISPLAY_FILE:File = new File("app-storage:/displays.xml"); 
+		private var _workDir:File = File.applicationStorageDirectory;
+		//private const DISPLAY_FILE:File = new File("app-storage:/displays.xml"); 
 
 		[Bindable] public var _year:int = new Date().getFullYear();
 		[Bindable] public var _copyright:String = "";
@@ -447,7 +448,7 @@
 
 		// 初期化
 		private final function init():void {
-			firstConfig();
+			initConfig();
 			_shadowFilter = new DropShadowFilter();
 			_shadowFilter.color = 0x000000;
 			_shadowFilter.alpha = 0.4;
@@ -462,7 +463,7 @@
 			// systemManager.stage.displayState = StageDisplayState.FULL_SCREEN_INTERACTIVE;
 
 			// テンポラリのクリア
-			var temp:File = new File("app-storage:/temp/");
+			var temp:File = _workDir.resolvePath("temp/");
 			if (temp.exists) {
 				var files:Array = temp.getDirectoryListing();
 				for each(var file:* in files) {
@@ -481,30 +482,19 @@
 			initDisplayConfig();
 		}
 
-		private final function firstConfig():void {
-			var configXML:File = new File("app-storage:/config.xml");
+		private final function initConfig():void {
+			var configXML:File = new File("app:/config.xml");
 			if (configXML.exists) {
 				var fs:FileStream = new FileStream();
 				try {
 					fs.open(configXML, FileMode.READ);
 					var text:String = fs.readUTFBytes(fs.bytesAvailable);
 					var xml:XML = XML(text);
-					xml.work.text();
+					_workDir = new File(xml.work.text());
 				} catch (error:Error) {
 					trace("<Error> " + error.message);
 				} finally {
 					fs.close();		
-				}
-
-			} else {
-				var directory:File = File.documentsDirectory;
-				directory.addEventListener(Event.SELECT, function(event:Event):void {
-					var dir:File = event.target as File;
-				});
-				try {
-					directory.browseForDirectory("作業用のフォルダを設定してください。");
-				} catch (error:Error) {
-					trace("Failed:", error.message);
 				}
 			}
 		}
@@ -576,7 +566,8 @@
 			if (_displays.display.length() == 0) {
 				var fs:FileStream = new FileStream();
 				try {
-					fs.open(DISPLAY_FILE, FileMode.READ);
+					var displayFile:File = _workDir.resolvePath("display.xml");
+					fs.open(displayFile, FileMode.READ);
 					var xml:String = fs.readUTFBytes(fs.bytesAvailable);
 					_displays = XML(xml);
 				} catch (error:Error) {
@@ -647,9 +638,9 @@
 				directory.addEventListener(Event.SELECT, function(event:Event):void {
 					var dir:File = event.target as File;
 					var dst:File = new File(dir.nativePath + "/switch-datas");
-					var src:File = new File("app-storage:/datas/" + _displays.display[i].address);
+					var src:File = _workDir.resolvePath("datas/" + _displays.display[i].address);
 					trace("export: " + src.nativePath + " > " + dst.nativePath);
-					dst.moveToTrash();
+					if (dst.exists) dst.moveToTrash();
 					src.copyToAsync(dst, true);
 					src.addEventListener(Event.COMPLETE, function(event:Event):void {
 						trace("export done");
@@ -691,7 +682,8 @@
 		/** ディスプレイ情報保存 */
 		private final function saveDisplay():void {
 			trace('save displays');
-			SwitchUtils.saveXML(_displays, DISPLAY_FILE);
+			var displayFile:File = _workDir.resolvePath("display.xml");
+			SwitchUtils.saveXML(_displays, displayFile);
 		}
 
 		/** 編集開始 */
@@ -729,7 +721,7 @@
 				var display:XML = getEditDisplay();
 				saveWorkspaceFile(display);
 
-				mediaSelector.setData(display.address.text(), _workspace);
+				mediaSelector.setData(_workDir, display.address.text(), _workspace);
 				mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 					statusText.text = event.text;
 				});
@@ -740,7 +732,7 @@
 				startPreview(); // 繋がった場合、プレビューの開始
 				startStatus();
 				if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
-					_mediaSyncronizer = new MediaSyncronizer(display, _workspace);
+					_mediaSyncronizer = new MediaSyncronizer(_workDir, display, _workspace);
 					_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 						statusText.text = event.text;
 					});
@@ -1282,7 +1274,8 @@
 				}
 			}
 			
-			var workspace:File = new File("app-storage:/datas/" + display.address + "/workspace.xml");
+			
+			var workspace:File = _workDir.resolvePath("datas/" + display.address + "/workspace.xml");
 			var fs:FileStream = new FileStream();
 			try {
 				fs.open(workspace, FileMode.WRITE);
@@ -1307,7 +1300,7 @@
 
 				var files:Object = mediaSelector.getUploadFiles();
 				for (var file:String in files) {
-					var f:File = new File("app-storage:/datas/" + display.address + "/" + file);
+					var f:File = _workDir.resolvePath("datas/" + display.address + "/" + file);
 					try {
 						files[file].moveTo(f, true);
 						_uploader.addFile(file, f);

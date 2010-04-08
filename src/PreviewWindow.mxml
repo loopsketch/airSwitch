@@ -10,6 +10,7 @@
 			import mx.core.UIComponent;
 			import mx.managers.PopUpManager;
 
+			public var workDir:File = null;
 			public var baseURL:String;
 			public var item:XML = null;
 
@@ -41,7 +42,7 @@
 				var path:String = item.children()[0].text();
 				// trace("preview: " + path);
 				if (path.indexOf("switch-data:/") == 0) {
-					path = "app-storage:/datas/" + path.substr(13);
+					path = "datas/" + path.substr(13);
 					trace("preview: " + path);
 				}
 				_stream.play(path);
@@ -59,7 +60,7 @@
 				loader.load(request);
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					try {
-						var file:File = new File("app-storage:/datas/" + path);
+						var file:File = workDir.resolvePath("datas/" + path);
 						var stream:FileStream = new FileStream();
 						var byteArr:ByteArray = new ByteArray();
 						stream.open(file, FileMode.WRITE);
