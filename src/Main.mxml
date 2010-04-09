@@ -491,6 +491,7 @@
 					var text:String = fs.readUTFBytes(fs.bytesAvailable);
 					var xml:XML = XML(text);
 					_workDir = new File(xml.work.text());
+					if (!_workDir.exists) _workDir.createDirectory();
 				} catch (error:Error) {
 					trace("<Error> " + error.message);
 				} finally {
