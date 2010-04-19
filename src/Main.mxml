@@ -304,6 +304,7 @@
 					<mx:VBox>
 						<mx:HBox width="100%">
 							<mx:Button id="editMode" click="toggleEditMode(event)" />
+							<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
 							<mx:Spacer width="100%"/>
 							<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
 						</mx:HBox>
@@ -311,9 +312,7 @@
 							<mx:VBox width="100%" label="プレイリスト編成" paddingLeft="4" paddingRight="4" paddingBottom="4">
 								<mx:HBox width="100%">
 									<mx:ColorPicker id="colorPicker" editable="true" change="changeColor(event)" />
-									<mx:TextInput id="playlistName" text="" change="changePlaylistName(event)" width="300" />								
-									<mx:Spacer width="100%"/>
-									<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
+									<mx:TextInput id="playlistName" text="" change="changePlaylistName(event)" width="300" />
 								</mx:HBox>
 								<mx:HBox width="100%">
 									<mx:TextArea id="playlistText" width="100%" height="80" editable="false" />
