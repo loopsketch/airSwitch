@@ -6,7 +6,7 @@
 		<mx:FormItem label="トランジション">
 			<mx:ComboBox id="transition" dataProvider="{_trantisionItems}" />
 		</mx:FormItem>
-		<mx:FormItem label="再生モード">
+		<mx:FormItem label="遷移アクション">
 			<mx:HBox>
 				<mx:ComboBox id="playmode" dataProvider="{_modeItems}" change="changePlaymode()" />
 				<mx:ComboBox id="plSelector" dataProvider="{workspace.playlists.playlist}" labelField="@name" change="changePlaylist()" />
@@ -115,6 +115,7 @@
 			} else {
 				baseItem.@next = playmode.selectedItem.data;
 			}
+			dispatchEvent(new EditedWorkspaceEvent());
 			onClose();
 		}
 
