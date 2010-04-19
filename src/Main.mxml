@@ -285,7 +285,7 @@
 									<mx:Button id="addPlaylistButton" label="＋" click="addPlaylist(event)"  />
 									<mx:Button id="deletePlaylistButton" label="－" click="deletePlaylist(event)" />
 								</mx:HBox>
-								<svvitch:PlaylistSelector id="playlistSelector" dragEnabled="true"
+								<svvitch:PlaylistSelector id="playlistSelector" 
 									dataProvider="{_workspace.playlists.playlist}" width="250" height="572"
 									change="changePlaylist()" />
 							</mx:VBox>

@@ -217,7 +217,7 @@
 		}
 
 		override protected final function dragDropHandler(event:DragEvent):void {
-			trace("drag&drop mediaselector" + typeof(event.currentTarget));
+			trace("drag&drop media selector" + typeof(event.currentTarget));
 			var pos:int = calculateDropIndex(event);
 			super.dragDropHandler(event);
 			scrollToIndex(pos);
