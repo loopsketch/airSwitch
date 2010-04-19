@@ -68,7 +68,7 @@
 		}
 
 		private final function checkDragEvent(event:DragEvent):Boolean {
-			if (event.dragInitiator is MediaSelector) {
+			if (event.dragInitiator is MediaSelector || event.dragInitiator is PlaylistEditor) {
 				if (event.dragSource.hasFormat("items")) {
 					var items:Array = event.dragSource.dataForFormat('items') as Array;
 					return (typeof(items[0]) == "xml" && items[0].name() == "item");
