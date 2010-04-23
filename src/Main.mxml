@@ -344,17 +344,16 @@
 						</mx:Panel>
 					</mx:VBox>
 				</mx:HBox>
-				<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
-					<mx:Label id="statusText" text="" styleName="statusText" />					
-				</mx:HBox>
 			</mx:VBox>
 		</mx:HBox>
 	</mx:ViewStack>
 	<mx:HRule width="100%" alpha="0.5" />
+	<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
+		<mx:Label id="statusText" text="" styleName="statusText" />					
+	</mx:HBox>
 	<!--
 	<mx:Label width="100%" text="copyright(c)2009-{_year} {_copyright} allrights reserved." styleName="footerText" />
 	-->
-	<mx:Label width="100%" text="" styleName="footerText" />
 	<!-- コード -->
 	<mx:Script><![CDATA[
 		import flash.display.Sprite;
@@ -600,6 +599,11 @@
 			return "http://" + address + ":9090";
 		}
 
+		private final function isLocal():Boolean {
+			var display:XML = getEditDisplay();
+			return (display && display.address.text().indexOf("127.0.0.") == 0);
+		}
+
 		/** DataGrid選択Index取得処理 */
 		private final function getSelectedIndex(displays:XML):int {
 			var len:int = displays.display.length();
@@ -710,40 +714,77 @@
 
 		/** 操作画面初期化 */
 		private final function initPlayOperation():void {
-			_editable = true;
-			toggleEditMode(null);
 			_workspace = <workspace />;
 			unselectPlaylist();
-			var loader:URLLoader = new URLLoader();
-			var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
-			request.useCache = false;
-			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
-				_workspace = new XML(event.target.data);
-				var display:XML = getEditDisplay();
-				saveWorkspaceFile(display);
 
-				mediaSelector.setData(_workDir, display.address.text(), _workspace);
-				mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-					statusText.text = event.text;
-				});
-				mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
-				playlistEditor.setData(_workspace);
-				playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
-				shortcutList.setData(_workspace, baseURL(), setPlaylist);
-				startPreview(); // 繋がった場合、プレビューの開始
-				startStatus();
-				if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
-					_mediaSyncronizer = new MediaSyncronizer(_workDir, display, _workspace);
-					_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-						statusText.text = event.text;
-					});
+			if (isLocal()) {
+				_editable = false;
+				toggleEditMode(null);
+				var display:XML = getEditDisplay();
+				var fs:FileStream = new FileStream();
+				try {
+					var file:File = _workDir.resolvePath("datas/" + display.address.text() + "/workspace.xml");
+					if (file.exists) {
+						fs.open(file, FileMode.READ);
+						var xml:String = fs.readUTFBytes(fs.bytesAvailable);
+						_workspace = XML(xml);						
+					} else {
+						_workspace =
+						<workspace>
+						  <templates>
+							<item id="t000" name="動画" type="movie">
+							  <movie>%%1</movie>
+							</item>
+							<item duration="60000" id="t001" name="静止画" type="image">
+							  <image>%%1</image>
+							</item>
+						  </templates>
+						</workspace>;
+					}
+				} catch (error:Error) {
+					trace("<Error> " + error.message);
+				} finally {
+					fs.close();		
 				}
+				startOperation(display);
+				
+			} else {
+				_editable = true;
+				toggleEditMode(null);
+				var loader:URLLoader = new URLLoader();
+				var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
+				request.useCache = false;
+				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+					_workspace = new XML(event.target.data);
+					var display:XML = getEditDisplay();
+					saveWorkspaceFile(display);
+					startOperation(display);
+					startPreview(); // 繋がった場合、プレビューの開始
+					startStatus();
+					if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
+						_mediaSyncronizer = new MediaSyncronizer(_workDir, display, _workspace);
+						_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+							statusText.text = event.text;
+						});
+					}
+				});
+				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+					trace(event);
+					Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
+				});
+				loader.load(request);
+			}
+		}
+
+		private final function startOperation(display:XML):void {
+			mediaSelector.setData(_workDir, display.address.text(), _workspace);
+			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+				statusText.text = event.text;
 			});
-			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
-				trace(event);
-				Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
-			});
-			loader.load(request);
+			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
+			playlistEditor.setData(_workspace);
+			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
+			shortcutList.setData(_workspace, baseURL(), setPlaylist);
 		}
 
 		/** プレビューの開始 */
@@ -997,7 +1038,7 @@
 					break;
 				}
 			}
-			if (useText) {
+			if (useText && !isLocal()) {
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(baseURL() + "/get/text?pl=" + _playlist.@id.toString());
 				request.useCache = false;
@@ -1068,6 +1109,7 @@
 			playlistSelector.dataProvider.addItemAt(list, pos);
 			playlistSelector.selectedIndex = pos;
 			playlistSelector.scrollToIndex(pos);
+			changePlaylist();
 			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
@@ -1274,9 +1316,8 @@
 					}
 				}
 			}
-			
-			
-			var workspace:File = _workDir.resolvePath("datas/" + display.address + "/workspace.xml");
+
+			var workspace:File = _workDir.resolvePath("datas/" + display.address.text() + "/workspace.xml");
 			var fs:FileStream = new FileStream();
 			try {
 				fs.open(workspace, FileMode.WRITE);
@@ -1303,13 +1344,16 @@
 				for (var file:String in files) {
 					var f:File = _workDir.resolvePath("datas/" + display.address + "/" + file);
 					try {
-						files[file].moveTo(f, true);
+						if (files[file].exists) {
+							files[file].moveTo(f, true);
+						} else if (!f.exists) {
+						}
 						_uploader.addFile(file, f);
 					} catch (error:IOError) {
 						trace(error.message);
 					}
 				}
-				if (true) {
+				if (!isLocal()) {
 					// 転送処理
 					_uploader.addFile(workspace.name, workspace);
 					_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {
@@ -1340,8 +1384,11 @@
 					_uploader.startUpload(baseURL());
 
 				} else {
+					mediaSelector.clearUploadFiles();
 					PopUpManager.removePopUp(_uploader);
 					_uploader = null;
+					uneditedWorkspace();
+					Alert.show("ローカル保存を行いました");
 				}
 			}
 		}

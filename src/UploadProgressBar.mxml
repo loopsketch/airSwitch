@@ -4,7 +4,7 @@
 	width="400" height="160" close="{onClose()}" creationComplete="init()">
 	<mx:HRule width="100%" alpha="0.2" />
 	<mx:VBox width="100%">
-		<mx:Label id="message" />
+		<mx:Label id="message" width="380" />
 		<mx:ProgressBar id="progress" width="100%" label="" />
 	</mx:VBox>
 	<mx:HBox id="bar" width="100%" horizontalAlign="center">
@@ -71,7 +71,7 @@
 					} catch (error:Error) {
 						trace(error.message + ":" + json);
 					}
-					message.text = "[" + _files[_current].name + "]をアップロード中に異常が発生しました";
+					message.text = "[" + _files[_current].name + "]をアップロード中に異常が発生しました.再生中か準備済みでないか確認してください";
 					pb_close.enabled = true;
 				});
 				_files[_current].addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {

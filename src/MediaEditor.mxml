@@ -68,34 +68,49 @@
 								} else {
 									Alert.show("[" + file.name + "]はこのテンプレートに設定できません");
 								}
-								var items:XMLList = outerDocument.workspace.medialist.item;
+								var items:XMLList = outerDocument.workspace.medialist.item.copy();
+								for (var i:int = 0; i < items.length(); i++) {
+									if (items[i].@id == outerDocument._item.@id) {
+										delete items[i];
+										break;
+									}
+								}
 								var datas:XMLList = items.image.(text() == "switch-data:/media/" + file.name);
 								datas += items.movie.(text() == "switch-data:/media/" + file.name);
 								if (datas.length() > 0) {
 									trace("already registed " + file.name);
-									//Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
-									//useFile = false;
+									Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
+									useFile = false;
 								}
 								if (useFile) {
 									var key:String = item.text();
 									var path:String = "switch-data:/media/" + file.name;
 									if (key.indexOf("%%") == 0) {
+										// テンプレートへの設定
 										for each (var data:XML in outerDocument.mediaItemList.dataProvider) {
 											if (data.text() == key) {
 												data.setChildren(path);
 											}
 										}
 									} else {
-										var old:String = item.text();
 										var child:XMLList = outerDocument._item.children();
 										var used:int = 0;
-										for (var i:int = 0; i < child.length(); i++ ) {
-											if (child[i].text() == old) used++;
+										var old:String = "";
+										for (i = 0; i < child.length(); i++ ) {
+											// メディアのアイテム一覧と比較し同じコンテンツ数を検出
+											if (child[i].text() == key) {
+												old = child[i].text();
+												used++;
+											}
 										}
 										if (used == 0 || (used == 1 && item.text() == old)) {
 											// 使用されていないか、選択中のアイテムでの使用なら古い素材を削除する
 											outerDocument.selector.removeUploadFile(old);
-											outerDocument.oldFiles.push(old);
+											if (old != path) {
+												// 差し替えるファイルが同名でなければ、以前のファイルを削除リストに追加
+												outerDocument.oldFiles.push(old);
+												trace("add old(delete) file: " + old);
+											}
 										}
 										item.setChildren(path);
 									}
@@ -210,10 +225,21 @@
 					}
 					var path:String;
 					while ((path = oldFiles.pop()) != null) {
-						var data:XML = <file />;
-						data.@date = SwitchUtils.formatDate(new Date());
-						data.setChildren(path);
-						workspace.deletes.appendChild(data);
+						var datas:XMLList = workspace.items.image.(text() == path);
+						datas += workspace.items.movie.(text() == path);
+						if (datas.length() == 0) {
+							var file:XML = <file />;
+							file.@date = SwitchUtils.formatDate(new Date());
+							file.setChildren(path);
+							if (workspace.deletes.file.(text() == path).length() == 0) {
+								workspace.deletes.appendChild(file);
+								trace("append deletes child: " + path);
+							} else {
+								workspace.deletes.file.(text() == path).@date = SwitchUtils.formatDate(new Date());
+								trace("update deletes child: " + path);
+							}
+						} else {
+						}
 					}
 				}
 			}

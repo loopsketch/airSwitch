@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <config>
-	<work>app-storage:</work>
-	<!--work>E:\switch-work</work-->
+	<work>E:\switch-work</work>
+	<!--work>app-storage:</work-->
 </config>

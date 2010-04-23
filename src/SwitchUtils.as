@@ -55,8 +55,8 @@
 
 		/** 空きIDをサーチしてIDを生成して返します */
 		public static function createNewID(xml:XMLList, prefix:String):String {
-			var s:String = null;
 			var id:int = 1;
+			var s:String = createID(prefix, id);
 			try {
 				while ((xml.(@id == (s = createID(prefix, id)))).length() > 0) {
 					// 空きIDサーチ

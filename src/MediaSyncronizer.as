@@ -193,9 +193,9 @@
 			var fs:FileStream = new FileStream();
 			var file:File = _workDir.resolvePath("datas/" + _display.address + "/" + path);
 			fs.open(file, FileMode.WRITE);
-			var buf:ByteArray = new ByteArray();
 			stream.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
-				buf.clear();
+				var buf:ByteArray = new ByteArray();
+				//buf.clear();
 				if (stream.connected) stream.readBytes(buf);
 				fs.writeBytes(buf);
 			});
