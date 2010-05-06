@@ -152,6 +152,12 @@
 			padding-top: 8;
 		}
 
+		.displayText {
+			color: #6699ff;
+			font-size: 24px;
+			font-weight: bold;
+		}
+
 		.stopWatchText {
 			color: #cccccc;
 			font-size: 20px;
@@ -258,10 +264,6 @@
 							<mx:Object toolTip="プレイリスト移動" label="Ju" />
 						</mx:dataProvider>
 					</mx:ToggleButtonBar>
-					<mx:Label text="準備コンテンツ:" styleName="titleText" />
-					<mx:HRule width="235" alpha="0.5" />
-					<mx:Label text="{_preparedPlaylist}" color="#cccccc" width="235" paddingLeft="5" />
-					<mx:Label text="{_preparedContent}" color="#cccccc" width="235" textAlign="right" paddingLeft="10" />									
 				</mx:VBox>
 				<mx:VBox width="240" backgroundColor="#000000" paddingLeft="1" verticalGap="2">
 					<mx:Label text="ストップウォッチ:" styleName="titleText" />
@@ -271,6 +273,11 @@
 						<mx:Button id="watchButton" label="開始" click="actionStopWatch(event)" />
 						<mx:Button id="watchResetButton" label="ﾘｾｯﾄ" click="resetStopWatch()" />
 					</mx:HBox>
+				</mx:VBox>
+				<mx:VBox width="240" backgroundColor="#000000" paddingLeft="1" verticalGap="2">
+					<mx:Label text="ディスプレイ:" styleName="titleText" />
+					<mx:HRule width="235" alpha="0.5" />
+					<mx:Label text="{_stageName}" styleName="displayText" width="235" textAlign="center" paddingLeft="10" />
 				</mx:VBox>
 			</mx:VBox>
 			<mx:VBox>
@@ -305,7 +312,13 @@
 						<mx:HBox width="100%">
 							<mx:Button id="editMode" click="toggleEditMode(event)" />
 							<mx:Button id="saveButton" label="SAVE" click="saveWorkspace(event);" />	
-							<mx:Spacer width="100%"/>
+							<mx:VBox width="270" backgroundColor="#000000" paddingLeft="1" verticalGap="1">
+								<mx:HBox>
+									<mx:Label text="準備コンテンツ:" styleName="titleText" paddingTop="4" />
+									<mx:Label text="{_preparedPlaylist}" color="#cccccc" width="160" paddingTop="4" paddingLeft="1" />
+								</mx:HBox>
+								<mx:Label text="{_preparedContent}" color="#cccccc" width="265" textAlign="right" paddingLeft="10" />
+							</mx:VBox>
 							<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
 						</mx:HBox>
 						<mx:TabNavigator backgroundColor="#333333"  paddingBottom="0">
@@ -414,6 +427,7 @@
 		[Bindable] public var _displays:XML = <displays />;
 		[Bindable] public var _workspace:XML = <workspace />;
 		[Bindable] public var _playlist:XML = <playlist />;
+		[Bindable] public var _stageName:String = "";
 		[Bindable] public var _currentPlaylist:String = "";
 		[Bindable] public var _currentContent:String = "";
 		[Bindable] public var _timeRemain:String = "";
@@ -859,6 +873,7 @@
 			var json:String = loader.data;
 			try {
 				var status:Object = JSON.decode(json);
+				_stageName = status['stage-name'];
 				_currentPlaylist = status['current-playlist'];
 				_currentContent = status['current-content'];
 				_timeRemain = status['time_remain'];

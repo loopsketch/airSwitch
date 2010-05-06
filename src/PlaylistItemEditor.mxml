@@ -58,7 +58,7 @@
 					}
 				}
 				if (_item.hasOwnProperty("@next")) {
-					var next:Array = _item.@next.split(/[\s|-]+/);
+					var next:Array = _item.@next.split(/\s+/);
 					for each (var m:Object in _modeItems) {
 						if (next[0] == m.data) {
 							playmode.selectedItem = m;

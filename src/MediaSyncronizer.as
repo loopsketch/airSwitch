@@ -168,9 +168,12 @@
 							name = name.substr(12);
 						}
 						var file:File = getFile(name);
-						if (file.exists) {
-							file.deleteFile();
-							trace("delete: " + file.nativePath);
+						try {
+							if (file && file.exists) {
+								file.deleteFile();
+								trace("delete: " + file.nativePath);
+							}
+						} catch (error:Error) {
 						}
 					}
 				}
