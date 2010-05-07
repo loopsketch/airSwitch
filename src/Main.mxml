@@ -292,9 +292,7 @@
 									<mx:Button id="addPlaylistButton" label="＋" click="addPlaylist(event)"  />
 									<mx:Button id="deletePlaylistButton" label="－" click="deletePlaylist(event)" />
 								</mx:HBox>
-								<svvitch:PlaylistSelector id="playlistSelector" 
-									dataProvider="{_workspace.playlists.playlist}" width="250" height="572"
-									change="changePlaylist()" />
+								<svvitch:PlaylistSelector id="playlistSelector" width="250" height="572" change="changePlaylist()" />
 							</mx:VBox>
 							<mx:VBox id="mediaTab" label="メディア" paddingLeft="4" paddingRight="4" paddingBottom="4">
 								<mx:HBox width="100%" verticalAlign="middle">
@@ -335,9 +333,7 @@
 											toolTip="文字テロップを更新" visible="false" />
 									</mx:VBox>
 								</mx:HBox>
-								<svvitch:PlaylistEditor id="playlistEditor"
-									dataProvider="{_playlist.item}" width="480" height="242"
-									change="selectContent()" />
+								<svvitch:PlaylistEditor id="playlistEditor" width="480" height="242" change="selectContent()" />
 								<mx:HBox width="100%">
 									<mx:Spacer width="100%"/>
 									<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
@@ -791,13 +787,14 @@
 		}
 
 		private final function startOperation(display:XML):void {
+			playlistSelector.dataProvider = _workspace.playlists.playlist;
+			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 			mediaSelector.setData(_workDir, display.address.text(), _workspace);
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				statusText.text = event.text;
 			});
 			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 			playlistEditor.setData(_workspace);
-			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
 		}
 
@@ -1034,6 +1031,7 @@
 		private final function changePlaylist():void {
 			//trace("change playlist");
 			_playlist = playlistSelector.selectedItem as XML;
+			playlistEditor.dataProvider = _playlist.item;
 			viewPlaylist();
 		}
 
@@ -1410,18 +1408,20 @@
 
 		/** 閉じる */
 		private final function onClose():void {
+			var text:String;
 			if (_editedDisplay) {
-				// 変更の有無を確認
-				Alert.show("変更されていますが、保存せずに終了してよろしいですか？", "アラート", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
-					if (event.detail == Alert.YES) {
-						saveDisplay();
-						stage.nativeWindow.close();
-					}
-				});
+				text = "変更されていますが、保存せずに終了してよろしいですか？";
 			} else {
-				saveDisplay();
-				stage.nativeWindow.close();
+				text = "終了してよろしいですか？";
 			}
+
+			// 終了を確認
+			Alert.show(text, "終了の確認", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+				if (event.detail == Alert.YES) {
+					saveDisplay();
+					stage.nativeWindow.close();
+				}
+			});
 		}
 	]]></mx:Script>
 </mx:Application>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <mx:List xmlns:mx="http://www.adobe.com/2006/mxml"
-	dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
+	dragEnabled="true" dropEnabled="true" dragMoveEnabled="true" >
 	<mx:itemRenderer>
 		<mx:Component>
 			<mx:HBox backgroundColor="{getColor(data)}" horizontalScrollPolicy="off">
@@ -48,10 +48,10 @@
 		}
 
 		override protected final function dragDropHandler(event:DragEvent):void {
-			trace("drag&drop playlist selector" + typeof(event.currentTarget));
 			var pos:int = calculateDropIndex(event);
+			trace("drag&drop playlist selector " + typeof(event.currentTarget) + " " + pos);
 			super.dragDropHandler(event);
-			//scrollToIndex(pos);
+			scrollToIndex(pos);
 			if (event.action == DragManager.COPY) {
 				trace("playlist item copy");
 				var data:XML = dataProvider.getItemAt(pos);
