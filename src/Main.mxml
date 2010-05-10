@@ -206,6 +206,7 @@
 				</mx:FormItem>
 				<mx:HBox width="100%" horizontalAlign="right">
 					<mx:Button label="add" click="addDisplay()" />
+					<mx:Button label="sync" click="syncWorkspace()" />
 					<mx:Button label="export" click="exportWorkspace()" />
 					<mx:Button label="delete" click="deleteDisplayItem()" />
 				</mx:HBox>
@@ -217,7 +218,7 @@
 							<mx:DataGridColumn headerText="編集" width="50" dataField="edit" textAlign="center"
 								itemRenderer="RadioButtonRenderer" editorDataField="selected" rendererIsEditor="true" />
 							<mx:DataGridColumn headerText="出力" width="50" dataField="out"
-								itemRenderer="CheckBoxRenderer" editorDataField="selected" rendererIsEditor="true" />
+								itemRenderer="CheckBoxRenderer" editorDataField="selectedValue" rendererIsEditor="true" />
 							<mx:DataGridColumn headerText="ディスプレイ名" width="120" dataField="name" />
 							<mx:DataGridColumn headerText="IPアドレス" width="120" dataField="address" />
 							<mx:DataGridColumn headerText="説明" dataField="description" />
@@ -432,8 +433,11 @@
 		[Bindable] public var _preparedPlaylist:String = "";
 		[Bindable] public var _preparedContent:String = "";
 		[Bindable] public var _brightness:int = 50;
+		public var _statusCount:int = 0;
 		private var _action:String;
 		private var _transition:String;
+		private var _remoteCopy:String;
+		private var _delayedUpdate:String;
 
 		private var _oldDataGridEvent:DataGridEvent;
 
@@ -645,6 +649,30 @@
 			trace('display: ' + _displays.display.length);
 		}
 
+		/** 同期処理 */
+		private final function syncWorkspace():void {
+			var edit:String = "";
+			var editIP:String = "";
+			var outDisplays:Array = new Array();
+			for (var i:int = 0; i < _displays.display.length(); i++) {
+				if (_displays.display[i].edit == 'true') {
+					edit = _displays.display[i].name;
+				} else if (_displays.display[i].out == 'true') {
+					outDisplays.push(_displays.display[i].name);
+				}
+			}
+			if (edit.length > 0 && outDisplays.length > 0) {
+				var text:String = "[" + edit + "]を[" + outDisplays.join(" / ") + "]に同期します。よろしいですか？";
+				Alert.show(text, "同期処理の確認", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+					if (event.detail == Alert.YES) {
+						copyWorkspace();
+					}
+				});				
+			} else {
+				Alert.show("編集/出力ディスプレイを選択してください");				
+			}
+		}
+
 		/** エクスポート処理 */
 		private final function exportWorkspace():void {
 			var i:int = displayGrid.selectedIndex;
@@ -793,6 +821,9 @@
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				statusText.text = event.text;
 			});
+			addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+				statusText.text = event.text;
+			});
 			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
 			playlistEditor.setData(_workspace);
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
@@ -907,6 +938,35 @@
 						transition.selectedIndex = 0;
 					}
 				}
+				if (status['remote-copy'] != _remoteCopy) {
+					_remoteCopy = status['remote-copy'];
+					if (_remoteCopy) {
+						if (_remoteCopy == "1") {
+							dispatchEvent(new OperationStatusEvent("同期処理を開始しました"));
+						} else if (_remoteCopy == "3") {
+							dispatchEvent(new OperationStatusEvent("同期中..."));
+						} else if (_remoteCopy.indexOf("3") == 0) {
+							dispatchEvent(new OperationStatusEvent(_remoteCopy.substr(2) + " 同期中..."));
+						} else if (_remoteCopy == "10") {
+							dispatchEvent(new OperationStatusEvent("同期処理が終了しました"));
+							var request:URLRequest = new URLRequest(baseURL() + "/set/status");
+							request.method = URLRequestMethod.POST;
+							var params:URLVariables = new URLVariables();
+							params.n = "remote-copy";
+							params.v = "";
+							request.data = params;
+							sendToURL(request);
+							trace("reset remote-copy");				
+						}
+					}
+				}
+				if (status['delayed-update'] != _delayedUpdate) {
+					_delayedUpdate = status['delayed-update'];
+					if (_delayedUpdate) dispatchEvent(new OperationStatusEvent(_delayedUpdate + "が使用中のため、停止してから更新されます"));
+				}
+				if (_statusCount == 0) {
+					_delayedUpdate = "";
+				}
 				//if (status['set-text']) {
 				//	var data:Array = status['set-text'].split(":", 2);
 				//	var playlists:XMLList = _workspace.playlists.playlist.(@id == data[0]);
@@ -925,7 +985,8 @@
 			} catch (error:Error) {
 				trace(error.message + ":" + json);
 			}
-		}
+			_statusCount = (_statusCount + 1) % 10;
+}
 
 		/** ステータスモニタの停止 */
 		private final function stopStatus():void {
@@ -1384,6 +1445,7 @@
 									PopUpManager.removePopUp(_uploader);
 									_uploader = null;
 									uneditedWorkspace();
+									copyWorkspace();
 								}
 							} catch (error:Error) {
 								trace(error.message + ":" + json);
@@ -1402,6 +1464,33 @@
 					_uploader = null;
 					uneditedWorkspace();
 					Alert.show("ローカル保存を行いました");
+				}
+			}
+		}
+
+		private final function copyWorkspace():void {
+			if (_displays) {
+				var edit:String = "";
+				var outDisplays:Array = new Array();
+				for (var i:int = 0; i < _displays.display.length(); i++) {
+					if (_displays.display[i].edit == 'true') {
+						edit = _displays.display[i].address;
+					}
+					if (_displays.display[i].out == 'true') {
+						outDisplays.push(_displays.display[i].address);
+					}
+				}
+				while (outDisplays.length > 0) {
+					var out:String = outDisplays.shift();
+					if (out != edit) {
+						var request:URLRequest = new URLRequest("http://" + out + ":9090/copy");
+						request.method = URLRequestMethod.POST;
+						var params:URLVariables = new URLVariables();
+						params.remote = edit + ":9090";
+						request.data = params;
+						sendToURL(request);
+						trace("remote copy: " + out + " << " + params.remote);
+					}
 				}
 			}
 		}
