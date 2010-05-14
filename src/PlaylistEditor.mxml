@@ -108,6 +108,13 @@
 			dataProvider.addItemAt(data, pos);
 		}
 
+		public final function update():void {
+			for (var i:int = 0; i < dataProvider.length; i++) {
+				var item:Object = dataProvider.getItemAt(i);
+				dataProvider.itemUpdated(item);
+				trace(item);
+			}
+		}
 		//override protected final function dragCompleteHandler(event:DragEvent):void {
 		//	super.dragCompleteHandler(event);
 		//} 

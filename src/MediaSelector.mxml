@@ -224,6 +224,14 @@
 			if (event.action == DragManager.COPY) {
 				trace("media item copy");
 				var data:XML = dataProvider.getItemAt(pos);
+				var i:int = 0;
+				var orgName:String = data.@name;
+				var name:String = orgName;
+				while ((_workspace.medialist.item.(@name == name)).length() > 0) {
+					i++;
+					name = orgName + "(" + i + ")";
+				}
+				data.@name = name;
 				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "m");
 			}
 			dispatchEvent(new EditedWorkspaceEvent());

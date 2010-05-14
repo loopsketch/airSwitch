@@ -31,6 +31,14 @@
 		import mx.managers.DragManager;
 		import mx.events.DragEvent;
 
+		private var _workspace:XML;
+
+		/** データセット */
+		public final function setData(workspace:XML):void {
+			_workspace = workspace;
+			dataProvider = _workspace.playlists.playlist;
+		}
+
 		private final function checkDragEvent(event:DragEvent):Boolean {
 			if (event.dragSource.hasFormat("items")) {
 				var items:Array = event.dragSource.dataForFormat('items') as Array;
@@ -55,6 +63,14 @@
 			if (event.action == DragManager.COPY) {
 				trace("playlist item copy");
 				var data:XML = dataProvider.getItemAt(pos);
+				var i:int = 0;
+				var orgName:String = data.@name;
+				var name:String = orgName;
+				while ((_workspace.playlists.playlist.(@name == name)).length() > 0) {
+					i++;
+					name = orgName + "(" + i + ")";
+				}
+				data.@name = name;
 				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "pl");
 			}
 			dispatchEvent(new EditedWorkspaceEvent());
