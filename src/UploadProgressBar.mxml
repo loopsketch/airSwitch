@@ -26,7 +26,7 @@
 		private final function init():void {
 			progress.mode = ProgressBarMode.MANUAL;
 			progress.setProgress(0, 100);
-			pb_close.enabled = false;
+			pb_close.visible = false;
 		}
 
 		public final function addFile(path:String, file:File):void {
@@ -72,12 +72,12 @@
 						trace(error.message + ":" + json);
 					}
 					message.text = "[" + _files[_current].name + "]をアップロード中に異常が発生しました.再生中か準備済みでないか確認してください";
-					pb_close.enabled = true;
+					pb_close.visible = true;
 				});
 				_files[_current].addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 					trace(event);
 					message.text = "[" + _files[_current].name + "]をアップロード中に異常が発生しました";
-					pb_close.enabled = true;
+					pb_close.visible = true;
 				});
 				_files[_current].addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
 					var p:int = (100 / _paths.length) * event.bytesLoaded / event.bytesTotal;
@@ -87,7 +87,6 @@
 			} else {
 				progress.setProgress(100, 100);
 				message.text = "アップロードが完了しました";
-				pb_close.enabled = true;
 				dispatchEvent(new Event(Event.COMPLETE));
 			}
 		}
