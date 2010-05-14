@@ -204,6 +204,7 @@
 
 		/** 登録処理 */
 		private final function onRegist():void {
+			if (mediaName.text.length == 0) return;
 			if (!_item.hasOwnProperty("@id")) {
 				// 新規登録
 				_item.@id = SwitchUtils.createNewID(workspace.medialist.item, "m");
