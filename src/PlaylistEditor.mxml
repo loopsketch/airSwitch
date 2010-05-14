@@ -56,6 +56,7 @@
 		</mx:Component>
 	</mx:itemRenderer>
 	<mx:Script><![CDATA[
+		import mx.controls.Alert;
 		import mx.managers.DragManager;
 		import mx.events.DragEvent;
 		import mx.events.DragEvent;
@@ -102,10 +103,14 @@
 			DragManager.showFeedback(DragManager.NONE);
 
 			// アイテム追加
-			var items:Array = event.dragSource.dataForFormat('items') as Array;
-			var data:XML = <item />;
-			data.setChildren(items[0].@id.toString());
-			dataProvider.addItemAt(data, pos);
+			if (dataProvider.length < 99) {
+				var items:Array = event.dragSource.dataForFormat('items') as Array;
+				var data:XML = <item />;
+				data.setChildren(items[0].@id.toString());
+				dataProvider.addItemAt(data, pos);				
+			} else {
+				Alert.show("プレイリストに登録できるのは99アイテムまでです");
+			}
 		}
 
 		public final function update():void {
