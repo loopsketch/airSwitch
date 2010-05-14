@@ -488,9 +488,6 @@
 				}				
 			}
 			addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
-			//playlistSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
-			//mediaSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
-			//playlistEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			initDisplayConfig();
 		}
 
@@ -815,8 +812,11 @@
 		}
 
 		private final function startOperation(display:XML):void {
-			playlistSelector.dataProvider = _workspace.playlists.playlist;
-			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
+			playlistSelector.setData(_workspace);
+			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
+				editedWorkspace(event);
+				shortcutList.dataProvider.refresh();
+			});
 			mediaSelector.setData(_workDir, display.address.text(), _workspace);
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				statusText.text = event.text;
@@ -824,7 +824,10 @@
 			addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				statusText.text = event.text;
 			});
-			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, editedWorkspace);
+			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
+				editedWorkspace(event);
+				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
+			});
 			playlistEditor.setData(_workspace);
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
 		}
@@ -839,7 +842,7 @@
 						addEventListener(Event.COMPLETE, updatePreviewImage);
 						addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
 							trace('remote display no result');
-							event.target.loader.unload();
+							//event.target.loader.unload();
 						});
 					}
 					var request:URLRequest = new URLRequest(baseURL() + "/get/snapshot");
@@ -986,7 +989,7 @@
 				trace(error.message + ":" + json);
 			}
 			_statusCount = (_statusCount + 1) % 10;
-}
+		}
 
 		/** ステータスモニタの停止 */
 		private final function stopStatus():void {
@@ -1052,10 +1055,12 @@
 				//playlistSelector.dragEnabled = true;
 				playlistSelector.dropEnabled = true; 
 				mediaSelector.dragEnabled = true;
-				colorPicker.enabled = true;
-				playlistName.editable = true;
-				playlistEditor.dragEnabled = true;
-				deletePlaylistItemButton.enabled = true;
+				if (playlistSelector.selectedIndex != -1) {
+					colorPicker.enabled = true;
+					playlistName.editable = true;
+					playlistEditor.dragEnabled = true;
+					deletePlaylistItemButton.enabled = true;
+				}
 
 			} else {
 				editMode.setStyle("icon", _lockIcon);
@@ -1111,6 +1116,12 @@
 					useText = true;
 					break;
 				}
+			}
+			if (_editable) {
+				colorPicker.enabled = true;
+				playlistName.editable = true;
+				playlistEditor.dragEnabled = true;
+				deletePlaylistItemButton.enabled = true;
 			}
 			if (useText && !isLocal()) {
 				var loader:URLLoader = new URLLoader();
@@ -1174,8 +1185,17 @@
 
 		/** プレイリスト追加 */
 		private final function addPlaylist(event:Event):void {
-			var list:XML = <playlist name="新しいプレイリスト" />
+			var i:int = 0;
+			var name:String = "新しいプレイリスト";
+			while ((_workspace.playlists.playlist.(@name == name)).length() > 0) {
+				i++;
+				name = "新しいプレイリスト" + i;
+			}
+			trace("playlist name: " + name);
+
+			var list:XML = <playlist />;
 			list.@id = SwitchUtils.createNewID(_workspace.playlists.playlist, "pl");
+			list.@name = name;
 			var pos:int = playlistSelector.selectedIndex;
 			if (pos == -1) {
 				pos = playlistSelector.dataProvider.length;
@@ -1184,7 +1204,6 @@
 			playlistSelector.selectedIndex = pos;
 			playlistSelector.scrollToIndex(pos);
 			changePlaylist();
-			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		/** プレイリスト削除 */
@@ -1194,7 +1213,6 @@
 				playlistSelector.dataProvider.removeItemAt(i);
 				if (i > 0) playlistSelector.scrollToIndex(i - 1);
 				unselectPlaylist();
-				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1202,7 +1220,6 @@
 		private final function changePlaylistName(event:Event):void {
 			if (_editable && _playlist) {
 				_playlist.@name = playlistName.text;
-				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1210,7 +1227,7 @@
 		private final function changeColor(event:Event):void {
 			if (_editable && _playlist) {
 				_playlist.@color = colorPicker.selectedColor.toString(16);
-				dispatchEvent(new EditedWorkspaceEvent());
+				//playlistSelector.dataProvider.update();
 			}
 		}
 
