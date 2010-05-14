@@ -82,6 +82,30 @@
 			_uploadFiles = {};
 		}
 
+		/** 選択アイテムの削除 */
+		public final function deleteSelectedItem():void {
+			if (selectedIndex != -1) {
+				var item:XML = dataProvider.getItemAt(selectedIndex);
+				var child:XMLList = item.children();
+				for (var j:int = 0; j < child.length(); j++) {
+					if (child[j].name() == "movie" || child[j].name() == "image") {
+						if (!removeUploadFile(child[j].text())) {
+							// アップロードファイルに無い場合は、削除指定をしておく
+							var data:XML = <file />;
+							data.@date = SwitchUtils.formatDate(new Date());
+							data.setChildren(child[j].text());
+							if (_workspace.deletes.length() == 0) {
+								_workspace.appendChild(<deletes />);
+							}
+							_workspace.deletes.appendChild(data);
+						}
+					}
+				}
+				dataProvider.removeItemAt(selectedIndex);
+				if (selectedIndex > 0) scrollToIndex(selectedIndex - 1);
+			}
+		}
+
 		/** アップロードファイル一覧 */
 		public final function getUploadFiles():Object {
 			return _uploadFiles;

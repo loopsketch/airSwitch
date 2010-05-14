@@ -1181,6 +1181,10 @@
 			_playlist = <playlist />;
 			colorPicker.selectedColor = 0x111111;		
 			playlistName.text = "";
+			colorPicker.enabled = false;
+			playlistName.editable = false;
+			playlistEditor.dragEnabled = false;
+			deletePlaylistItemButton.enabled = false;
 		}
 
 		/** プレイリスト追加 */
@@ -1308,27 +1312,19 @@
 				var item:XML = mediaSelector.dataProvider.getItemAt(i);
 				var xml:XMLList = _workspace.playlists.playlist.item.(text() == item.@id);
 				if (xml.length() > 0) {
-					Alert.show("プレイリストから削除してからでないと削除できません.");
+					Alert.show("プレイリストに登録されていますが削除しますか？", "削除の確認", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+						if (event.detail == Alert.YES) {
+							var item:XML;
+							for each(item in xml) {
+								delete item.(true)[0];
+							}
+							if (_playlist) changePlaylist();
+							mediaSelector.deleteSelectedItem();
+						}
+					});
 					return;
 				}
-				var child:XMLList = item.children();
-				for (var j:int = 0; j < child.length(); j++) {
-					if (child[j].name() == "movie" || child[j].name() == "image") {
-						if (!mediaSelector.removeUploadFile(child[j].text())) {
-							// アップロードファイルに無い場合は、削除指定をしておく
-							var data:XML = <file />;
-							data.@date = SwitchUtils.formatDate(new Date());
-							data.setChildren(child[j].text());
-							if (_workspace.deletes.length() == 0) {
-								_workspace.appendChild(<deletes />);
-							}
-							_workspace.deletes.appendChild(data);
-						}
-					}
-				}
-				mediaSelector.dataProvider.removeItemAt(i);
-				if (i > 0) mediaSelector.scrollToIndex(i - 1);
-				dispatchEvent(new EditedWorkspaceEvent());
+				mediaSelector.deleteSelectedItem();
 			}
 		}
 
