@@ -29,7 +29,8 @@
 
 		private var _timer:Timer;
 		private var _workDir:File = null;
-		private var _display:XML = null;
+		private var _address:String = null;
+		private var _baseURL:String = null;
 		private var _workspace:XML = null;
 		private var _mediaSet:Array = null;
 		private var _size:int = 0;
@@ -37,9 +38,10 @@
 		//private var _cml:CompositeMassLoader;
 
 
-		public function MediaSyncronizer(workDir:File, display:XML, workspace:XML) {
+		public function MediaSyncronizer(workDir:File, displays:XML, workspace:XML) {
 			_workDir = workDir;
-			_display = display;
+			_address = SwitchUtils.getEditDisplay(displays).address;
+			_baseURL = SwitchUtils.baseURL(displays);
 			_workspace = workspace;
 
 			//_cml = new CompositeMassLoader();
@@ -48,16 +50,9 @@
 			_timer.start();
 		}
 
-		/** ディスプレイへのベースURL取得 */
-		private final function baseURL():String {
-			var address:String = "127.0.0.1";
-			if (_display) address = _display.address.text();
-			return "http://" + address + ":9090";
-		}
-
 		/** 保存ファイル取得 */
 		private final function getFile(path:String):File {
-			return _workDir.resolvePath("datas/" + _display.address + "/" + path);			
+			return _workDir.resolvePath("datas/" + _address + "/" + path);			
 		}
 
 		public final function running():Boolean {
@@ -93,7 +88,7 @@
 				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + media + "チェック中...";
 				dispatchEvent(new OperationStatusEvent(status));
 				var loader:URLLoader = new URLLoader();
-				var request:URLRequest = new URLRequest(baseURL() + "/files?path=" + media);
+				var request:URLRequest = new URLRequest(_baseURL + "/files?path=" + media);
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					var json:String = event.target.data;
@@ -192,9 +187,9 @@
 			var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中...";
 			dispatchEvent(new OperationStatusEvent(status));
 			var stream:URLStream = new URLStream();
-			var request:URLRequest = new URLRequest(baseURL() + "/download?path=" + path);
+			var request:URLRequest = new URLRequest(_baseURL + "/download?path=" + path);
 			var fs:FileStream = new FileStream();
-			var file:File = _workDir.resolvePath("datas/" + _display.address + "/" + path);
+			var file:File = _workDir.resolvePath("datas/" + _address + "/" + path);
 			fs.open(file, FileMode.WRITE);
 			stream.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void {
 				var buf:ByteArray = new ByteArray();
@@ -209,7 +204,8 @@
 			});
 			stream.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
 				trace("I/O error: " + event);
-				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中に異常が発生しました.";
+				var status:String = "!(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中に異常が発生しました.";
+				dispatchEvent(new OperationStatusEvent(status));
 			});
 			stream.load(request);
 		}

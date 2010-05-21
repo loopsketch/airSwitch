@@ -164,8 +164,14 @@
 			font-weight: bold;
 		}
 
-		.statusText {
+		.statusNormal {
 			color: #33cc33;
+			font-size: 10px;
+			font-weight: bold;
+		}
+
+		.statusWarning {
+			color: #cc3333;
 			font-size: 10px;
 			font-weight: bold;
 		}
@@ -340,9 +346,14 @@
 									<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
 								</mx:HBox>
 							</mx:VBox>
-							<!-- mx:VBox width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
-								<mx:DateField />
-							</mx:VBox -->
+							<mx:VBox width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
+								<svvitch:ScheduleEditor id="scheduleEditor" width="480" height="356" />
+								<mx:HBox width="100%">
+									<mx:Spacer width="100%"/>
+									<mx:Button id="addScheduleItemButton" label="＋" click="addScheduleItem(event)" />
+									<mx:Button id="deleteScheduleItemButton" label="－" click="deleteScheduleItem(event)" />
+								</mx:HBox>
+							</mx:VBox>
 						</mx:TabNavigator>
 						<mx:Panel title="ショートカット" width="100%">
 							<svvitch:ShortcutList id="shortcutList"
@@ -359,7 +370,7 @@
 	</mx:ViewStack>
 	<mx:HRule width="100%" alpha="0.5" />
 	<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
-		<mx:Label id="statusText" text="" styleName="statusText" />					
+		<mx:Label id="statusText" text="" styleName="statusNormal" />					
 	</mx:HBox>
 	<!--
 	<mx:Label width="100%" text="copyright(c)2009-{_year} {_copyright} allrights reserved." styleName="footerText" />
@@ -592,25 +603,15 @@
 
 		/** 編集ディスプレイの取得 */
 		private final function getEditDisplay():XML {
-			if (_displays) {
-				for (var i:int = 0; i < _displays.display.length(); i++) {
-					if (_displays.display[i].edit == 'true') {
-						return _displays.display[i];
-					}
-				}
-			}
-			return null;
+			return SwitchUtils.getEditDisplay(_displays);
 		}
 
 		/** ディスプレイへのベースURL取得 */
 		private final function baseURL():String {
-			var address:String = "127.0.0.1";
-			var display:XML = getEditDisplay();
-			if (display) address = display.address.text();
-			return "http://" + address + ":9090";
+			return SwitchUtils.baseURL(_displays);
 		}
 
-		private final function isLocal():Boolean {
+		private final function isLocalMode():Boolean {
 			var display:XML = getEditDisplay();
 			return (display && display.address.text().indexOf("127.0.0.") == 0);
 		}
@@ -752,7 +753,7 @@
 			_workspace = <workspace />;
 			unselectPlaylist();
 
-			if (isLocal()) {
+			if (isLocalMode()) {
 				_editable = false;
 				toggleEditMode(null);
 				var display:XML = getEditDisplay();
@@ -782,7 +783,7 @@
 					fs.close();		
 				}
 				startOperation(display);
-				
+
 			} else {
 				_editable = true;
 				toggleEditMode(null);
@@ -797,9 +798,16 @@
 					startPreview(); // 繋がった場合、プレビューの開始
 					startStatus();
 					if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
-						_mediaSyncronizer = new MediaSyncronizer(_workDir, display, _workspace);
+						_mediaSyncronizer = new MediaSyncronizer(_workDir, _displays, _workspace);
 						_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-							statusText.text = event.text;
+							var text:String = event.text;
+							if (text.indexOf("!") == 0) {
+								text = text.substr(1);
+								statusText.styleName = "statusWarning";
+							} else {
+								statusText.styleName = "statusNormal";
+							}
+							statusText.text = text;
 						});
 					}
 				});
@@ -965,7 +973,7 @@
 				}
 				if (status['delayed-update'] != _delayedUpdate) {
 					_delayedUpdate = status['delayed-update'];
-					if (_delayedUpdate) dispatchEvent(new OperationStatusEvent(_delayedUpdate + "が使用中のため、停止してから更新されます"));
+					if (_delayedUpdate) dispatchEvent(new OperationStatusEvent("!" + _delayedUpdate + "が使用中のため、停止してから更新されます"));
 				}
 				if (_statusCount == 0) {
 					_delayedUpdate = "";
@@ -1123,7 +1131,7 @@
 				playlistEditor.dragEnabled = true;
 				deletePlaylistItemButton.enabled = true;
 			}
-			if (useText && !isLocal()) {
+			if (useText && !isLocalMode()) {
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(baseURL() + "/get/text?pl=" + _playlist.@id.toString());
 				request.useCache = false;
@@ -1376,6 +1384,13 @@
 			loader.load(new URLRequest(baseURL() + "/switch"));
 		}
 
+		/** スケジュールアイテムの追加 */
+		private final function addScheduleItem(event:Event):void {
+		}
+
+		/** スケジュールアイテムの削除 */
+		private final function deleteScheduleItem(event:Event):void {
+		}
 
 		/** ショートカットの削除 */
 		private final function deleteShorcut(event:Event):void {
@@ -1440,7 +1455,7 @@
 						trace(error.message);
 					}
 				}
-				if (!isLocal()) {
+				if (!isLocalMode()) {
 					// 転送処理
 					_uploader.addFile(workspace.name, workspace);
 					_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {

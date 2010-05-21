@@ -12,6 +12,28 @@
 	 */
 	public class SwitchUtils {		
 
+		/** 編集ディスプレイの取得 */
+		public static function getEditDisplay(displays:XML):XML {
+			if (displays) {
+				for (var i:int = 0; i < displays.display.length(); i++) {
+					if (displays.display[i].edit == 'true') {
+						return displays.display[i];
+					}
+				}
+			}
+			return null;
+		}
+
+		/** ベースURL生成 */
+		public static function baseURL(displays:XML):String {
+			var address:String = "127.0.0.1";
+			var display:XML = getEditDisplay(displays);
+			if (display) address = display.address.text();
+			if (address.indexOf(":") == -1) address = address + ":9090";
+			var id:String = address.replace(/\.|:/g, "_");
+			return "http://" + address + "/" + id;
+		}
+
 		public static function format(num:int, width:int):String {
 			var zero:String = Math.pow(10, width - 1).toString().substr(1);
 			return (zero + num.toString()).substr(-width);
