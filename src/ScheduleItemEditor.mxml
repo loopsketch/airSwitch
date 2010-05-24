@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	title="スケジュール編集" showCloseButton="false" close="{onClose()}" creationComplete="init()">
+	<mx:HRule width="100%" alpha="0.2" />
+	<mx:Form id="displayConfigForm" width="100%" height="100%">
+		<mx:FormItem label="指定方法">
+			<mx:HBox>
+				<mx:ComboBox id="scheduleType" dataProvider="{_typeItems}" change="changeType()" />
+				<mx:DateField id="seldate"  formatString="YYYY/MM/DD" />
+				<mx:ComboBox id="selweek" dataProvider="{_weeks}" />
+				<mx:TextInput id="hour" restrict="[0-9]" maxChars="2" />
+				<mx:Label text="時" paddingLeft="0" />
+				<mx:TextInput id="minute" restrict="[0-9]" maxChars="2" />
+				<mx:Label text="分" paddingLeft="0" />
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="アクション">
+			<mx:HBox>
+				<mx:ComboBox id="command" dataProvider="{_commandItems}" change="changeCommand()" />
+				<mx:ComboBox id="plSelector" dataProvider="{workspace.playlists.playlist}" labelField="@name" />
+				<mx:HSlider id="brightness" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="0" change="changeBrightness()" />
+			</mx:HBox>
+		</mx:FormItem>
+	</mx:Form>
+	<mx:HBox id="bar" width="100%" horizontalAlign="center">
+		<mx:Button id="regist" label="登録" click="onRegist()" />
+		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
+	</mx:HBox>
+	<mx:Script><![CDATA[
+		import mx.collections.ArrayCollection;
+		import mx.managers.PopUpManager;
+
+		[Bindable]
+		public var workspace:XML;
+		public var baseItem:XML = null;
+
+		[Bindable]
+		private var _item:XML;
+
+		[Bindable]
+		private var _typeItems:ArrayCollection = new ArrayCollection([
+			{label:"毎日", data:"\\*\\s+\\*\\s+\\*\\s+\\d+\\s+\\d+\\s+\\*"}, // * * * n n *
+			{label:"毎週", data:"\\*\\s+\\*\\s+\\*\\s+\\d+\\s+\\d+\\s+\\d+"}, // * * * n n n
+			{label:"指定日", data:"\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\*"} // n n n n n *
+		]);
+
+		[Bindable]
+		private var _weeks:ArrayCollection = new ArrayCollection([
+			{label:"日曜日", data:0}, // to 6, where 0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+			{label:"月曜日", data:1},
+			{label:"火曜日", data:2},
+			{label:"水曜日", data:3},
+			{label:"木曜日", data:4},
+			{label:"金曜日", data:5},
+			{label:"土曜日", data:6}
+		]);
+
+		[Bindable]
+		private var _commandItems:ArrayCollection = new ArrayCollection([
+			{label:"プレイリスト移動", data:"playlist"},
+			{label:"輝度変更", data:"luminance"}
+		]);
+
+		[Bindable]
+		private var _plItems:ArrayCollection = new ArrayCollection();
+
+		private final function init():void {
+			if (baseItem) {
+				_item = new XML(baseItem);
+				for each (var m:Object in _typeItems) {
+					var pat:RegExp = new RegExp(m.data);
+					if (pat.test(_item.@time)) {
+						scheduleType.selectedItem = m;
+						changeType();
+						break;
+					}
+				}
+				var time:Array = _item.@time.split(/\s+/);
+				if (time.length == 6) {
+					hour.text = time[3];
+					minute.text = time[4];
+				}
+
+				trace("schedule: " + _item.text());
+				if (_item.text().length() > 0) {
+					var text:Array = _item.text().split(/\s+/);
+					if (text[0] == "playlist") {
+						command.selectedIndex = 0;
+						for each (var item:Object in plSelector.dataProvider) {
+							if (item.@id == text[1]) {
+								plSelector.selectedItem = item;
+							}
+						}
+					} else if (text[0] == "luminance") {
+						command.selectedIndex = 1;
+						brightness.value = parseInt(text[1]);
+					}
+					changeCommand();					
+				}
+			}
+		}
+
+		/** 指定タイプ変更 */
+		private final function changeType():void {
+			if (scheduleType.selectedIndex == 1) {
+				//seldate.includeInLayout = false;
+				seldate.enabled = false;
+				selweek.enabled = true;
+			} else if (scheduleType.selectedIndex == 2) {
+				selweek.enabled = false;
+				seldate.enabled = true;
+			} else {
+				seldate.enabled = false;
+				selweek.enabled = false;
+			}
+		}
+
+		/** コマンド変更 */
+		private final function changeCommand():void {
+			if (command.selectedIndex == 0) {
+				plSelector.enabled = true;
+				brightness.enabled = false;
+			} else if (command.selectedIndex == 1) {
+				plSelector.enabled = false;
+				brightness.enabled = true;
+			}
+		}
+
+		/** 輝度 */
+		private final function changeBrightness():void {
+		}
+
+		/** 登録処理 */
+		private final function onRegist():void {
+			//baseItem.@transition = transition.selectedItem.data;
+			//if (playmode.selectedItem.data == "jump") {
+			//	baseItem.@next = playmode.selectedItem.data + " " + plSelector.selectedItem.@id + "-" + itemSelector.selectedIndex;
+			//} else {
+			//	baseItem.@next = playmode.selectedItem.data;
+			//}
+			dispatchEvent(new EditedWorkspaceEvent());
+			onClose();
+		}
+
+		/** クローズ処理 */
+		private final function onClose():void {
+			PopUpManager.removePopUp(this);
+		}
+	]]></mx:Script>
+</mx:TitleWindow>

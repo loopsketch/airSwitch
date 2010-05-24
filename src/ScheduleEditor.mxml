@@ -13,10 +13,10 @@
 						if (outerDocument.dragEnabled) {
 							var i:int = outerDocument.selectedIndex;
 							if (i != -1) {
-								var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, PlaylistItemEditor, true);
+								var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, ScheduleItemEditor, true);
 								var item:XML = outerDocument.selectedItem as XML;
 								if (item) {
-									var editor:PlaylistItemEditor = popup as PlaylistItemEditor;
+									var editor:ScheduleItemEditor = popup as ScheduleItemEditor;
 									editor.workspace = outerDocument._workspace;
 									editor.baseItem = item;
 									PopUpManager.centerPopUp(popup);
@@ -30,28 +30,14 @@
 						return String(i);
 					}
 
-					public final function getName(item:Object):String {
-						var media:XMLList = outerDocument._workspace.medialist.item.(@id == item.toString());
-						if (media) {
-							return media.@name.toString();
-						}
-						return "(not found id:" + item.text().toString() + ")";
+					public final function getTime(item:Object):String {
+						var time:String = item.@time.toString();
+						return time;
 					}
 
-					public final function getTransition(item:Object):String {
-						var transition:String = item.@transition.toString();
-						return transition;
-					}
-
-					public final function getNext(item:Object):String {
-						var next:String = item.@next.toString();
-						return next;
-					}
 				]]></mx:Script>
 				<mx:Label text="{rowNum(data)}" width="25" textAlign="right" />
-				<mx:Label text="{getName(data)}" width="300" />
-				<mx:Label text="{getTransition(data)}" width="50" />
-				<mx:Label text="{getNext(data)}" width="50" />
+				<mx:Label text="{getTime(data)}" width="300" />
 			</mx:HBox>
 		</mx:Component>
 	</mx:itemRenderer>
@@ -70,11 +56,8 @@
 		}
 
 		private final function checkDragEvent(event:DragEvent):Boolean {
-			if (event.dragInitiator is MediaSelector || event.dragInitiator is PlaylistEditor) {
-				if (event.dragSource.hasFormat("items")) {
-					var items:Array = event.dragSource.dataForFormat('items') as Array;
-					return (typeof(items[0]) == "xml" && items[0].name() == "item");
-				}
+			if (event.dragInitiator is ScheduleEditor) {
+				return true;
 			}
 			return false;
 		}
@@ -91,7 +74,7 @@
 			dispatchEvent(new EditedWorkspaceEvent());
 
 			var pos:int = calculateDropIndex(event);
-			if (event.dragInitiator is PlaylistEditor) {
+			if (event.dragInitiator is ScheduleEditor) {
 				// 同じクラスからの場合はリストの入替えとする
 				super.dragDropHandler(event);
 				scrollToIndex(pos);
@@ -102,16 +85,6 @@
 			event.target.mx_internal::lastDragEvent = null; 
 			event.target.mx_internal::resetDragScrolling(); 
 			DragManager.showFeedback(DragManager.NONE);
-
-			// アイテム追加
-			if (dataProvider.length < 99) {
-				var items:Array = event.dragSource.dataForFormat('items') as Array;
-				var data:XML = <item />;
-				data.setChildren(items[0].@id.toString());
-				dataProvider.addItemAt(data, pos);				
-			} else {
-				Alert.show("プレイリストに登録できるのは99アイテムまでです");
-			}
 		}
 
 		public final function update():void {
@@ -121,6 +94,7 @@
 				trace(item);
 			}
 		}
+
 		//override protected final function dragCompleteHandler(event:DragEvent):void {
 		//	super.dragCompleteHandler(event);
 		//} 

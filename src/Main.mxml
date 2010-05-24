@@ -837,6 +837,7 @@
 				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
 			});
 			playlistEditor.setData(_workspace);
+			scheduleEditor.setData(_workspace);
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
 		}
 
