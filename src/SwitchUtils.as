@@ -3,6 +3,7 @@
 	import flash.filesystem.*;
 
 	import com.adobe.utils.NumberFormatter;
+	import mx.collections.ArrayCollection;
 	import mx.utils.StringUtil;
 
 
@@ -10,7 +11,32 @@
 	 * ユーティリティクラス
 	 * @author toru@loopsketch.com
 	 */
-	public class SwitchUtils {		
+	public final class SwitchUtils {		
+
+		[Bindable]
+		public static var SCHEDULE_TYPES:ArrayCollection = new ArrayCollection([
+			{id:0, label:"毎日", regexp:"\\*\\s+\\*\\s+\\*\\s+\\d+\\s+\\d+\\s+\\*"}, // * * * n n *
+			{id:1, label:"毎週", regexp:"\\*\\s+\\*\\s+\\*\\s+\\d+\\s+\\d+\\s+\\d+"}, // * * * n n n
+			{id:2, label:"指定日", regexp:"\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\*"} // n n n n n *
+		]);
+
+		[Bindable]
+		public static var SCHEDULE_WEEKS:ArrayCollection = new ArrayCollection([
+			{id:0, label:"日曜日", week:0}, // to 6, where 0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+			{id:1, label:"月曜日", week:1},
+			{id:2, label:"火曜日", week:2},
+			{id:3, label:"水曜日", week:3},
+			{id:4, label:"木曜日", week:4},
+			{id:5, label:"金曜日", week:5},
+			{id:6, label:"土曜日", week:6}
+		]);
+
+		[Bindable]
+		public static var SCHEDULE_COMMANDS:ArrayCollection = new ArrayCollection([
+			{label:"プレイリスト移動", command:"playlist"},
+			{label:"輝度変更", command:"luminance"}
+		]);
+
 
 		/** 編集ディスプレイの取得 */
 		public static function getEditDisplay(displays:XML):XML {
@@ -122,6 +148,39 @@
 				if (path.toLocaleLowerCase().substr(path.length - allows[i].length) == allows[i]) return true;
 			}
 			return false;
+		}
+
+		/** スケジュールをスケジュールタイプに変換 */
+		public static function scheduleToType(s:XML):Object {
+			for each (var m:Object in SwitchUtils.SCHEDULE_TYPES) {
+				var pat:RegExp = new RegExp(m.regexp);
+				if (pat.test(s.@time)) return m;
+			}
+			return null;
+		}
+
+		public static function scheduleToWeek(s:XML):Object {
+			var data:Array = s.@time.split(/\s+/, 6);
+			if (data[5] != '*') {
+				return SCHEDULE_WEEKS[parseInt(data[5])];
+			}
+			return null;
+		}
+
+		/** スケジュール文字列をスケジュールタイプに変換 */
+		public static function scheduleToCommand(s:XML):Object {
+			if (s.text().length() > 0) {
+				var c:Array = s.text().split(/\s+/, 2);
+				if (c.length == 2) {
+					for each (var m:Object in SwitchUtils.SCHEDULE_COMMANDS) {
+						if (c[0] == m.command) {
+							m.data = c[1];
+							return m;
+						}
+					}
+				}				
+			}
+			return null;
 		}
 	}
 }

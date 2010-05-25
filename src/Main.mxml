@@ -326,7 +326,7 @@
 							</mx:VBox>
 							<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
 						</mx:HBox>
-						<mx:TabNavigator backgroundColor="#333333"  paddingBottom="0">
+						<mx:TabNavigator id="detailTab" backgroundColor="#333333"  paddingBottom="0">
 							<mx:VBox width="100%" label="プレイリスト編成" paddingLeft="4" paddingRight="4" paddingBottom="4">
 								<mx:HBox width="100%">
 									<mx:ColorPicker id="colorPicker" editable="true" change="changeColor(event)" />
@@ -346,7 +346,7 @@
 									<mx:Button id="deletePlaylistItemButton" label="－" click="deletePlaylistItem(event)" />
 								</mx:HBox>
 							</mx:VBox>
-							<mx:VBox width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
+							<mx:VBox id="timelineTab" width="100%" label="タイムライン" paddingLeft="4" paddingRight="4" paddingBottom="4">
 								<svvitch:ScheduleEditor id="scheduleEditor" width="480" height="356" />
 								<mx:HBox width="100%">
 									<mx:Spacer width="100%"/>
@@ -824,6 +824,7 @@
 			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
 				editedWorkspace(event);
 				shortcutList.dataProvider.refresh();
+				scheduleEditor.dataProvider.refresh();
 			});
 			mediaSelector.setData(_workDir, display.address.text(), _workspace);
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
@@ -838,6 +839,9 @@
 			});
 			playlistEditor.setData(_workspace);
 			scheduleEditor.setData(_workspace);
+			scheduleEditor.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
+				editedWorkspace(event);
+			});
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
 		}
 
@@ -1070,12 +1074,17 @@
 					playlistEditor.dragEnabled = true;
 					deletePlaylistItemButton.enabled = true;
 				}
+				timelineTab.enabled = true;
+				scheduleEditor.dragEnabled = true;
+				addScheduleItemButton.enabled = true;
+				deleteScheduleItemButton.enabled = true;
 
 			} else {
 				editMode.setStyle("icon", _lockIcon);
 				// editMode.label = "×";
 				//swButton.enabled = true;
 				sourceTab.selectedIndex = 0;
+				detailTab.selectedIndex = 0;
 				mediaTab.enabled = false;
 				if (!_editedDisplay) {
 					saveButton.visible = false;
@@ -1091,6 +1100,10 @@
 				playlistName.editable = false;
 				playlistEditor.dragEnabled = false;
 				deletePlaylistItemButton.enabled = false;
+				timelineTab.enabled = false;
+				scheduleEditor.dragEnabled = false;
+				addScheduleItemButton.enabled = false;
+				deleteScheduleItemButton.enabled = false;
 			}
 		}
 
@@ -1387,10 +1400,25 @@
 
 		/** スケジュールアイテムの追加 */
 		private final function addScheduleItem(event:Event):void {
+			var s:XML = <playlist />;
+			s.@id = SwitchUtils.createNewID(_workspace.schedule.item, "sc");
+			s.@time = "* * * 00 00 *";
+			var pos:int = scheduleEditor.selectedIndex;
+			if (pos == -1) {
+				pos = scheduleEditor.dataProvider.length;
+			}
+			scheduleEditor.dataProvider.addItemAt(s, pos);
+			scheduleEditor.selectedIndex = pos;
+			scheduleEditor.scrollToIndex(pos);
 		}
 
 		/** スケジュールアイテムの削除 */
 		private final function deleteScheduleItem(event:Event):void {
+			var i:int = scheduleEditor.selectedIndex;
+			if (i != -1) {
+				scheduleEditor.dataProvider.removeItemAt(i);
+				if (i > 0) scheduleEditor.scrollToIndex(i - 1);
+			}
 		}
 
 		/** ショートカットの削除 */

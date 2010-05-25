@@ -30,14 +30,45 @@
 						return String(i);
 					}
 
-					public final function getTime(item:Object):String {
-						var time:String = item.@time.toString();
-						return time;
+					public final function getType(item:Object):String {
+						var xml:XML = item as XML;
+						if (xml.@time) {
+							var m:Object = SwitchUtils.scheduleToType(xml);
+							if (m) {
+								var data:Array = xml.@time.split(/\s+/, 6);
+								var s:String = m.label;
+								if (m.id == 1) {
+									var w:Object = SwitchUtils.scheduleToWeek(xml);
+									s = s + w.label + " ";
+								} else if (m.id == 2) {
+									s = data[0] + "/" + data[1] + "/" + data[2] + " ";
+								}
+								s = s + data[3] + ":" + data[4];
+								return s;
+							}							
+						}
+						return "-";
 					}
 
+					public final function getCommand(item:Object):String {
+						var xml:XML = item as XML;
+						var m:Object = SwitchUtils.scheduleToCommand(xml);
+						if (m) {
+							var s:String = m.label;
+							if (m.command == "playlist") {
+								var media:XMLList = outerDocument._workspace.playlists.playlist.(@id == m.data);
+								if (media) s = s + " " + media.@name;
+							} else if (m.command == "luminance") {
+								s = s + " " + m.data + "%"
+							}
+							return s;
+						}
+						return "";
+					}
 				]]></mx:Script>
 				<mx:Label text="{rowNum(data)}" width="25" textAlign="right" />
-				<mx:Label text="{getTime(data)}" width="300" />
+				<mx:Label text="{getType(data)}" width="200" />
+				<mx:Label text="{getCommand(data)}" width="300" />
 			</mx:HBox>
 		</mx:Component>
 	</mx:itemRenderer>

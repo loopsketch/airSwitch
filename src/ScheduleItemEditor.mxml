@@ -5,9 +5,9 @@
 	<mx:Form id="displayConfigForm" width="100%" height="100%">
 		<mx:FormItem label="指定方法">
 			<mx:HBox>
-				<mx:ComboBox id="scheduleType" dataProvider="{_typeItems}" change="changeType()" />
+				<mx:ComboBox id="scheduleType" dataProvider="{SwitchUtils.SCHEDULE_TYPES}" change="changeType()" />
 				<mx:DateField id="seldate"  formatString="YYYY/MM/DD" />
-				<mx:ComboBox id="selweek" dataProvider="{_weeks}" />
+				<mx:ComboBox id="selweek" dataProvider="{SwitchUtils.SCHEDULE_WEEKS}" />
 				<mx:TextInput id="hour" restrict="[0-9]" maxChars="2" />
 				<mx:Label text="時" paddingLeft="0" />
 				<mx:TextInput id="minute" restrict="[0-9]" maxChars="2" />
@@ -16,8 +16,8 @@
 		</mx:FormItem>
 		<mx:FormItem label="アクション">
 			<mx:HBox>
-				<mx:ComboBox id="command" dataProvider="{_commandItems}" change="changeCommand()" />
-				<mx:ComboBox id="plSelector" dataProvider="{workspace.playlists.playlist}" labelField="@name" />
+				<mx:ComboBox id="command" dataProvider="{SwitchUtils.SCHEDULE_COMMANDS}" change="changeCommand()" />
+				<mx:ComboBox id="playlist" dataProvider="{workspace.playlists.playlist}" labelField="@name" />
 				<mx:HSlider id="brightness" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="0" change="changeBrightness()" />
 			</mx:HBox>
 		</mx:FormItem>
@@ -37,66 +37,52 @@
 		[Bindable]
 		private var _item:XML;
 
-		[Bindable]
-		private var _typeItems:ArrayCollection = new ArrayCollection([
-			{label:"毎日", data:"\\*\\s+\\*\\s+\\*\\s+\\d+\\s+\\d+\\s+\\*"}, // * * * n n *
-			{label:"毎週", data:"\\*\\s+\\*\\s+\\*\\s+\\d+\\s+\\d+\\s+\\d+"}, // * * * n n n
-			{label:"指定日", data:"\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\d+\\s+\\*"} // n n n n n *
-		]);
-
-		[Bindable]
-		private var _weeks:ArrayCollection = new ArrayCollection([
-			{label:"日曜日", data:0}, // to 6, where 0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-			{label:"月曜日", data:1},
-			{label:"火曜日", data:2},
-			{label:"水曜日", data:3},
-			{label:"木曜日", data:4},
-			{label:"金曜日", data:5},
-			{label:"土曜日", data:6}
-		]);
-
-		[Bindable]
-		private var _commandItems:ArrayCollection = new ArrayCollection([
-			{label:"プレイリスト移動", data:"playlist"},
-			{label:"輝度変更", data:"luminance"}
-		]);
-
-		[Bindable]
-		private var _plItems:ArrayCollection = new ArrayCollection();
 
 		private final function init():void {
 			if (baseItem) {
 				_item = new XML(baseItem);
-				for each (var m:Object in _typeItems) {
-					var pat:RegExp = new RegExp(m.data);
-					if (pat.test(_item.@time)) {
-						scheduleType.selectedItem = m;
-						changeType();
-						break;
-					}
+				var m:Object = SwitchUtils.scheduleToType(_item);
+				if (m) {
+					scheduleType.selectedItem = m;
 				}
+				changeType();
 				var time:Array = _item.@time.split(/\s+/);
 				if (time.length == 6) {
+					var now:Date = new Date();
+					var year:int = now.getFullYear();
+					var mon:int = now.getMonth() + 1;
+					var day:int = now.getDate();
+					if (time[0] != '*') {
+						year = parseInt(time[0]);
+					}
+					if (time[1] != '*') {
+						mon = parseInt(time[1]);
+					}
+					if (time[2] != '*') {
+						day = parseInt(time[2]);
+					}
+					seldate.text = year + "/" + mon + "/" + day;
+					
 					hour.text = time[3];
 					minute.text = time[4];
 				}
 
-				trace("schedule: " + _item.text());
-				if (_item.text().length() > 0) {
-					var text:Array = _item.text().split(/\s+/);
-					if (text[0] == "playlist") {
+				m = SwitchUtils.scheduleToCommand(_item);
+				if (m) {
+					if (m.command == "playlist") {
 						command.selectedIndex = 0;
-						for each (var item:Object in plSelector.dataProvider) {
-							if (item.@id == text[1]) {
-								plSelector.selectedItem = item;
+						for each (var item:Object in playlist.dataProvider) {
+							if (item.@id == m.data) {
+								playlist.selectedItem = item;
+								break;
 							}
-						}
-					} else if (text[0] == "luminance") {
+						}						
+					} else if (m.command == "luminance") {
 						command.selectedIndex = 1;
-						brightness.value = parseInt(text[1]);
+						brightness.value = parseInt(m.data);
 					}
-					changeCommand();					
 				}
+				changeCommand();					
 			}
 		}
 
@@ -118,10 +104,10 @@
 		/** コマンド変更 */
 		private final function changeCommand():void {
 			if (command.selectedIndex == 0) {
-				plSelector.enabled = true;
+				playlist.enabled = true;
 				brightness.enabled = false;
 			} else if (command.selectedIndex == 1) {
-				plSelector.enabled = false;
+				playlist.enabled = false;
 				brightness.enabled = true;
 			}
 		}
@@ -132,12 +118,26 @@
 
 		/** 登録処理 */
 		private final function onRegist():void {
-			//baseItem.@transition = transition.selectedItem.data;
-			//if (playmode.selectedItem.data == "jump") {
-			//	baseItem.@next = playmode.selectedItem.data + " " + plSelector.selectedItem.@id + "-" + itemSelector.selectedIndex;
-			//} else {
-			//	baseItem.@next = playmode.selectedItem.data;
-			//}
+			var time:String = "";
+			var week:String = "";
+			if (scheduleType.selectedItem.id == 0) {
+				time = "* * * ";
+				week = " *";
+			} else if (scheduleType.selectedItem.id == 1) {
+				time = "* * * ";
+				week = " " + selweek.selectedItem.week;
+			} else if (scheduleType.selectedItem.id == 2) {
+				var date:Array = seldate.text.split(/\//, 3);
+				time = date[0] + " " + date[1] + " " + date[2] + " ";
+				week = " *";
+			}
+			baseItem.@time = time + hour.text + " " + minute.text + week;
+			if (command.selectedItem.command == "playlist") {
+				baseItem.setChildren("playlist " + playlist.selectedItem.@id);
+			} else if (command.selectedItem.command == "luminance") {
+				baseItem.setChildren("luminance " + brightness.value);
+			}
+			//trace(baseItem.toXMLString());
 			dispatchEvent(new EditedWorkspaceEvent());
 			onClose();
 		}
