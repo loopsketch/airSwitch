@@ -6,7 +6,7 @@
 		<mx:FormItem label="指定方法">
 			<mx:HBox>
 				<mx:ComboBox id="scheduleType" dataProvider="{SwitchUtils.SCHEDULE_TYPES}" change="changeType()" />
-				<mx:DateField id="seldate"  formatString="YYYY/MM/DD" />
+				<mx:DateField id="seldate"  formatString="YYYY/MM/DD"  toolTip="指定日選択" />
 				<mx:ComboBox id="selweek" dataProvider="{SwitchUtils.SCHEDULE_WEEKS}" />
 				<mx:TextInput id="hour" restrict="[0-9]" maxChars="2" />
 				<mx:Label text="時" paddingLeft="0" />
@@ -18,7 +18,7 @@
 			<mx:HBox>
 				<mx:ComboBox id="command" dataProvider="{SwitchUtils.SCHEDULE_COMMANDS}" change="changeCommand()" />
 				<mx:ComboBox id="playlist" dataProvider="{workspace.playlists.playlist}" labelField="@name" />
-				<mx:HSlider id="brightness" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="0" change="changeBrightness()" />
+				<mx:HSlider id="brightness" width="100%" minimum="0" maximum="100" tickInterval="10" snapInterval="1" value="0" change="changeBrightness()" toolTip="輝度設定" />
 			</mx:HBox>
 		</mx:FormItem>
 	</mx:Form>
@@ -26,6 +26,10 @@
 		<mx:Button id="regist" label="登録" click="onRegist()" />
 		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
 	</mx:HBox>
+	<mx:Array id="validators">
+		<mx:NumberValidator id="checkHour" minValue="0" maxValue="23" source="{hour}" property="text" />
+		<mx:NumberValidator id="checkMin" minValue="0" maxValue="59" source="{minute}" property="text" />
+	</mx:Array>
 	<mx:Script><![CDATA[
 		import mx.collections.ArrayCollection;
 		import mx.managers.PopUpManager;
@@ -118,6 +122,12 @@
 
 		/** 登録処理 */
 		private final function onRegist():void {
+			var err:Array = mx.validators.Validator.validateAll(validators);
+            if (err.length != 0) {
+                mx.controls.Alert.show("時刻指定を確認してください");
+				return;
+            }
+
 			var time:String = "";
 			var week:String = "";
 			if (scheduleType.selectedItem.id == 0) {
