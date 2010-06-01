@@ -41,7 +41,7 @@
 		public function MediaSyncronizer(workDir:File, displays:XML, workspace:XML) {
 			_workDir = workDir;
 			_address = SwitchUtils.getEditDisplay(displays).address;
-			_baseURL = SwitchUtils.baseURL(displays);
+			_baseURL = SwitchUtils.selectedDisplayToBaseURL(displays);
 			_workspace = workspace;
 
 			//_cml = new CompositeMassLoader();

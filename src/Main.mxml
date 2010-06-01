@@ -230,6 +230,7 @@
 					</mx:columns>
 				</mx:DataGrid>
 				<mx:HBox width="100%" horizontalAlign="right">
+					<mx:Button label="font" click="sendFile()" />
 					<mx:Button label="sync" click="syncWorkspace()" />
 					<mx:Button label="export" click="exportWorkspace()" />
 					<mx:Button label="delete" click="deleteDisplayItem()" />
@@ -544,6 +545,16 @@
 			systemManager.stage.nativeWindow.startMove();
 		}
 
+		private final function updateStatusText(s:String):void {
+			if (s.indexOf("!") == 0) {
+				s = s.substr(1);
+				statusText.styleName = "statusWarning";
+			} else {
+				statusText.styleName = "statusNormal";
+			}
+			statusText.text = s;
+		}
+
 		/** トグルボタンによるviewの変更 */
 		private final function changeView(event:Event):void {
 			trace("change: " + _editedDisplay);
@@ -611,7 +622,7 @@
 
 		/** ディスプレイへのベースURL取得 */
 		private final function baseURL():String {
-			return SwitchUtils.baseURL(_displays);
+			return SwitchUtils.selectedDisplayToBaseURL(_displays);
 		}
 
 		private final function isLocalMode():Boolean {
@@ -648,6 +659,31 @@
 			display.description = displayDescription.text;
 			_displays.appendChild(display);
 			trace('display: ' + _displays.display.length);
+		}
+
+		/** ファイル送信 */
+		private final function sendFile():void {
+			var i:int = displayGrid.selectedIndex;
+			if (i != -1) {
+				var file:File = File.documentsDirectory;
+				file.addEventListener(Event.SELECT, function(event:Event):void {
+					var f:File = event.target as File;
+					var sender:FileSender = new FileSender(_displays.display[i].address, f);
+					sender.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+						updateStatusText(event.text);
+					});
+					sender.exec();
+				});
+				try {
+					var filter:FileFilter = new FileFilter("フォントファイル(.ttf/.ttc)", "*.ttf;*.ttc");
+					var allFilter:FileFilter = new FileFilter("全て", "*.*");
+					file.browseForOpen("送信したいファイルを選択してください。", [filter, allFilter]);
+				} catch (error:Error) {
+					trace("Failed:", error.message);
+				}
+			} else {
+				Alert.show("送信先のディスプレイを選択してください");
+			}
 		}
 
 		/** 同期処理 */
@@ -803,14 +839,7 @@
 					if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
 						_mediaSyncronizer = new MediaSyncronizer(_workDir, _displays, _workspace);
 						_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-							var text:String = event.text;
-							if (text.indexOf("!") == 0) {
-								text = text.substr(1);
-								statusText.styleName = "statusWarning";
-							} else {
-								statusText.styleName = "statusNormal";
-							}
-							statusText.text = text;
+							updateStatusText(event.text);
 						});
 					}
 				});
@@ -831,10 +860,10 @@
 			});
 			mediaSelector.setData(_workDir, display.address.text(), _workspace);
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-				statusText.text = event.text;
+				updateStatusText(event.text);
 			});
 			addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-				statusText.text = event.text;
+				updateStatusText(event.text);
 			});
 			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
 				editedWorkspace(event);

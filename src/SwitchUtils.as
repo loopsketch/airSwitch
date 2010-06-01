@@ -51,10 +51,15 @@
 		}
 
 		/** ベースURL生成 */
-		public static function baseURL(displays:XML):String {
+		public static function selectedDisplayToBaseURL(displays:XML):String {
 			var address:String = "127.0.0.1";
 			var display:XML = getEditDisplay(displays);
 			if (display) address = display.address.text();
+			return baseURL(address);
+		}
+
+		/** ベースURL生成 */
+		public static function baseURL(address:String):String {
 			if (address.indexOf(":") == -1) address = address + ":9090";
 			var id:String = address.replace(/\.|:/g, "_");
 			return "http://" + address + "/" + id;
