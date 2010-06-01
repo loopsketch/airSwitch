@@ -212,10 +212,8 @@
 				</mx:FormItem>
 				<mx:HBox width="100%" horizontalAlign="right">
 					<mx:Button label="add" click="addDisplay()" />
-					<mx:Button label="sync" click="syncWorkspace()" />
-					<mx:Button label="export" click="exportWorkspace()" />
-					<mx:Button label="delete" click="deleteDisplayItem()" />
 				</mx:HBox>
+				<mx:Spacer height="10"/>
 				<mx:DataGrid id="displayGrid" width="100%" height="300" dataProvider="{_displays.display}"
 					verticalScrollPolicy="on" sortableColumns="false"
 					editable="true" itemEditBeginning="onDisplayEditBeginning(event)">
@@ -231,6 +229,11 @@
 						</mx:Array>
 					</mx:columns>
 				</mx:DataGrid>
+				<mx:HBox width="100%" horizontalAlign="right">
+					<mx:Button label="sync" click="syncWorkspace()" />
+					<mx:Button label="export" click="exportWorkspace()" />
+					<mx:Button label="delete" click="deleteDisplayItem()" />
+				</mx:HBox>
 			</mx:Form>
 		</mx:VBox>
 		<mx:HBox width="100%" height="100%">
