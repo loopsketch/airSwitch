@@ -1118,8 +1118,10 @@
 
 		private final function changePlaylist():void {
 			//trace("change playlist");
-			_playlist = playlistSelector.selectedItem as XML;
-			playlistEditor.dataProvider = _playlist.item;
+			if (playlistSelector.selectedItem) {
+				_playlist = playlistSelector.selectedItem as XML;
+				playlistEditor.dataProvider = _playlist.item;
+			}
 			viewPlaylist();
 		}
 
