@@ -475,6 +475,10 @@
 
 		// 初期化
 		private final function init():void {
+			var screenBounds:Rectangle = Screen.mainScreen.bounds; 
+			systemManager.stage.nativeWindow.x = (screenBounds.width - systemManager.stage.nativeWindow.width) / 2; 
+			systemManager.stage.nativeWindow.y = (screenBounds.height - systemManager.stage.nativeWindow.height) / 2; 
+			systemManager.stage.nativeWindow.visible = true;
 			initConfig();
 			_shadowFilter = new DropShadowFilter();
 			_shadowFilter.color = 0x000000;
