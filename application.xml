@@ -1,23 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?> 
-<application xmlns="http://ns.adobe.com/air/application/1.5">
+<application xmlns="http://ns.adobe.com/air/application/2.0">
 	<id>airSvvitch</id> 
-	<version>0.9</version> 
+	<version>0.9a</version> 
 	<filename>airSvvitch</filename> 
 	
 	<name>airSvvitch</name> 
 	<description></description> 
 	<copyright>www.loopsketch.com</copyright> 
-	
+
 	<initialWindow> 
 		<title>airSvvitch</title> 
 		<content>airSvvitch.swf</content> 
 		<systemChrome>none</systemChrome> 
 		<transparent>false</transparent> 
-		<visible>false</visible> 
+		<visible>true</visible> 
 		<minimizable>false</minimizable> 
 		<maximizable>false</maximizable> 
 		<resizable>false</resizable> 
 	</initialWindow>
+	<supportedProfiles>extendedDesktop</supportedProfiles>
 	<icon>
 		<image16x16>icons/16.png</image16x16>
 		<image32x32>icons/32.png</image32x32>

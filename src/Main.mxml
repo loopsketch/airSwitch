@@ -703,7 +703,7 @@
 				}
 			}
 			if (edit.length > 0 && outDisplays.length > 0) {
-				var text:String = "[" + edit + "]を[" + outDisplays.join(" / ") + "]に同期します。よろしいですか？";
+				var text:String = "[" + edit + "] -> [" + outDisplays.join(" / ") + "]\n同期してよろしいですか？";
 				Alert.show(text, "同期処理の確認", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
 					if (event.detail == Alert.YES) {
 						copyWorkspace();
@@ -832,6 +832,7 @@
 				toggleEditMode(null);
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
+				request.cacheResponse = false;
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					_workspace = new XML(event.target.data);
@@ -895,6 +896,7 @@
 						});
 					}
 					var request:URLRequest = new URLRequest(baseURL() + "/get/snapshot");
+					request.cacheResponse = false;
 					request.useCache = false;
 					loader.load(request);
 				});
@@ -938,6 +940,7 @@
 						trace('remote display no result');
 					});
 					var request:URLRequest = new URLRequest(baseURL() + "/get/status");
+					request.cacheResponse = false;
 					request.useCache = false;
 					loader.load(request);
 				});
@@ -1002,6 +1005,8 @@
 						} else if (_remoteCopy == "10") {
 							dispatchEvent(new OperationStatusEvent("同期処理が終了しました"));
 							var request:URLRequest = new URLRequest(baseURL() + "/set/status");
+							request.cacheResponse = false;
+							request.useCache = false;
 							request.method = URLRequestMethod.POST;
 							var params:URLVariables = new URLVariables();
 							params.n = "remote-copy";
@@ -1051,6 +1056,8 @@
 		/** 輝度変更 */
 		private final function changeBrightness(event:Event):void {
 			var request:URLRequest = new URLRequest(baseURL() + "/set/brightness");
+			request.cacheResponse = false;
+			request.useCache = false;
 			request.method = URLRequestMethod.POST;
 			var params:URLVariables = new URLVariables();
 			params.v = brightness.value;
@@ -1148,6 +1155,7 @@
 			var playlists:XMLList = _workspace.playlists.playlist.(@id == id);
 			if (playlists.length() > 0) {
 				_playlist = playlists[0];
+				playlistEditor.dataProvider = _playlist.item;
 				viewPlaylist();
 			}
 		}
@@ -1186,6 +1194,7 @@
 			if (useText && !isLocalMode()) {
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(baseURL() + "/get/text?pl=" + _playlist.@id.toString());
+				request.cacheResponse = false;
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					var result:Object = JSON.decode(event.currentTarget.data);
@@ -1224,6 +1233,8 @@
 			// trace("select content");
 			if (!_editable) {
 				var request:URLRequest = new URLRequest(baseURL() + "/set/playlist");
+				request.cacheResponse = false;
+				request.useCache = false;
 				request.method = URLRequestMethod.POST;
 				var params:URLVariables = new URLVariables();
 				params.pl = _playlist.@id.toString();
@@ -1321,6 +1332,8 @@
 			});
 
 			var request:URLRequest = new URLRequest(baseURL() + "/set/text");
+			request.cacheResponse = false;
+			request.useCache = false;
 			request.method = URLRequestMethod.POST;
 			var params:URLVariables = new URLVariables();
 			params.pl = _playlist.@id.toString();
@@ -1422,6 +1435,7 @@
 							});
 						}
 						var request:URLRequest = new URLRequest(baseURL() + "/get/snapshot");
+						request.cacheResponse = false;
 						request.useCache = false;
 						sl.load(request);
 					}
@@ -1433,12 +1447,15 @@
 				trace('remote display no result');
 			});
 			swButton.enabled = false;
-			loader.load(new URLRequest(baseURL() + "/switch"));
+			var request:URLRequest = new URLRequest(baseURL() + "/switch");
+			request.cacheResponse = false;
+			request.useCache = false;
+			loader.load(request);
 		}
 
 		/** スケジュールアイテムの追加 */
 		private final function addScheduleItem(event:Event):void {
-			var s:XML = <playlist />;
+			var s:XML = <item />;
 			s.@id = SwitchUtils.createNewID(_workspace.schedule.item, "sc");
 			s.@time = "* * * 00 00 *";
 			var pos:int = scheduleEditor.selectedIndex;
@@ -1549,7 +1566,10 @@
 						loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
 							trace('remote display no result');
 						});
-						loader.load(new URLRequest(baseURL() + "/update"));
+						var request:URLRequest = new URLRequest(baseURL() + "/update");
+						request.cacheResponse = false;
+						request.useCache = false;
+						loader.load(request);
 					});
 					_uploader.startUpload(baseURL());
 
@@ -1578,13 +1598,15 @@
 				while (outDisplays.length > 0) {
 					var out:String = outDisplays.shift();
 					if (out != edit) {
-						var request:URLRequest = new URLRequest("http://" + out + ":9090/copy");
+						var request:URLRequest = new URLRequest(SwitchUtils.baseURL(out) + "/copy");
+						request.cacheResponse = false;
+						request.useCache = false;
 						request.method = URLRequestMethod.POST;
 						var params:URLVariables = new URLVariables();
-						params.remote = edit + ":9090";
+						params.remote = SwitchUtils.baseURL(edit);
 						request.data = params;
 						sendToURL(request);
-						trace("remote copy: " + out + " << " + params.remote);
+						trace("remote copy: " + edit + " > " + out);
 					}
 				}
 			}

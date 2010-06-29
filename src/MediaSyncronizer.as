@@ -89,6 +89,8 @@
 				dispatchEvent(new OperationStatusEvent(status));
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(_baseURL + "/files?path=" + media);
+				request.cacheResponse = false;
+				request.useCache = false;
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					var json:String = event.target.data;
@@ -188,6 +190,8 @@
 			dispatchEvent(new OperationStatusEvent(status));
 			var stream:URLStream = new URLStream();
 			var request:URLRequest = new URLRequest(_baseURL + "/download?path=" + path);
+			request.cacheResponse = false;
+			request.useCache = false;
 			var fs:FileStream = new FileStream();
 			var file:File = _workDir.resolvePath("datas/" + _address + "/" + path);
 			fs.open(file, FileMode.WRITE);

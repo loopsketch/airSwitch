@@ -5,7 +5,7 @@
 :: http://livedocs.adobe.com/flex/3/html/help.html?content=CommandLineTools_5.html#1035959
 
 :: Path to Flex SDK binaries
-set PATH=%PATH%;D:\flex3.4.1.10084\bin
+set PATH=%PATH%;D:\flex3_air2\bin
 
 :: Signature (see 'CreateCertificate.bat')
 set CERTIFICATE=certificate.pfx
@@ -14,14 +14,14 @@ if not exist %CERTIFICATE% goto certificate
 
 :: Output
 if not exist air md air
-set AIR_FILE=air/airSvvitch.air
+set AIR_FILE=air/airSvvitchSetup.exe
 
 :: Input
 set APP_XML=application.xml 
 set FILE_OR_DIR=-C bin .
 
 echo Signing AIR setup using certificate %CERTIFICATE%.
-call adt -package %SIGNING_OPTIONS% %AIR_FILE% %APP_XML% %FILE_OR_DIR%
+call adt -package %SIGNING_OPTIONS% -target native %AIR_FILE% %APP_XML% %FILE_OR_DIR%
 if errorlevel 1 goto failed
 
 echo.
