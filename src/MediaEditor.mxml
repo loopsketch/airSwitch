@@ -103,6 +103,7 @@
 												used++;
 											}
 										}
+										trace("lookup old " + old);
 										if (used == 0 || (used == 1 && item.text() == old)) {
 											// 使用されていないか、選択中のアイテムでの使用なら古い素材を削除する
 											outerDocument.selector.removeUploadFile(old);

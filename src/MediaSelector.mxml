@@ -142,6 +142,7 @@
 				try {
 					file.deleteFile();
 					trace("deleted: " + file.nativePath);
+					delete _uploadFiles[path.substring(12)];
 					return true;
 				} catch (error:Error) {
 					trace("Error:", error.message);
