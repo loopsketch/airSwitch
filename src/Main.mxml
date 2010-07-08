@@ -388,6 +388,7 @@
 		import flash.events.IOErrorEvent;
 		import flash.events.MouseEvent;
 		import flash.events.TimerEvent;
+		import flash.events.KeyboardEvent;
 		import flash.filesystem.File;
 		import flash.net.URLLoader;  
 		import flash.net.URLRequest;  
@@ -511,11 +512,29 @@
 			addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				updateStatusText(event.text);
 			});
+			playlistSelector.addEventListener(KeyboardEvent.KEY_UP, function(event:KeyboardEvent):void {
+				switch (event.keyCode) {
+				case 46: // Deleteキー
+					if (_editable) deletePlaylist(event);
+				}
+			});
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				updateStatusText(event.text);
 			});
+			mediaSelector.addEventListener(KeyboardEvent.KEY_UP, function(event:KeyboardEvent):void {
+				switch (event.keyCode) {
+				case 46: // Deleteキー
+					if (_editable) deleteMedia(event);
+				}
+			});
 			playlistEditor.addEventListener(PlaylistItemEvent.ADD_PLAYLIST_ITEM, function(event:PlaylistItemEvent):void {
 				setTextEditMode();
+			});
+			playlistEditor.addEventListener(KeyboardEvent.KEY_UP, function(event:KeyboardEvent):void {
+				switch (event.keyCode) {
+				case 46: // Deleteキー
+					if (_editable) deletePlaylistItem(event);
+				}
 			});
 			initDisplayConfig();
 		}
