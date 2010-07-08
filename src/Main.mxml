@@ -650,7 +650,7 @@
 					t.start();
 				});
 				var display:XML = _displays.display[_monitorDisplay];
-				var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/get/remote-copy-status");
+				var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/get/display-status");
 				request.cacheResponse = false;
 				request.useCache = false;
 				loader.load(request);	
@@ -1333,14 +1333,15 @@
 			var list:XML = <playlist />;
 			list.@id = SwitchUtils.createNewID(_workspace.playlists.playlist, "pl");
 			list.@name = name;
-			var pos:int = playlistSelector.selectedIndex;
-			if (pos == -1) {
-				pos = playlistSelector.dataProvider.length;
-			}
+			var pos:int = playlistSelector.dataProvider.length;
 			playlistSelector.dataProvider.addItemAt(list, pos);
 			playlistSelector.selectedIndex = pos;
-			playlistSelector.scrollToIndex(pos);
 			changePlaylist();
+			var t:Timer = new Timer(200, 1);
+			t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+				playlistSelector.scrollToIndex(playlistSelector.selectedIndex);
+			});
+			t.start();
 		}
 
 		/** プレイリスト削除 */
