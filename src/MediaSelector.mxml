@@ -122,6 +122,10 @@
 				file.copyTo(dst, true);
 				trace("copy: " + dst.nativePath);
 				_uploadFiles[path] = dst;
+				var deletes:XMLList = _workspace.deletes.file.(text().substring(12) == path);
+				for (var i:int = 0; i < deletes.length(); i++) {
+					delete deletes[i];
+				}
 				dispatchEvent(new OperationStatusEvent(file.name + "を作業領域にコピーしました"));
 				result = true;
 			} catch (error:Error) {

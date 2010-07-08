@@ -1554,6 +1554,7 @@
 		/** ワークスペースの保存 */
 		private final function saveWorkspaceFile(display:XML):File {
 			if (_workspace.deletes.length() > 0) {
+				dispatchEvent(new OperationStatusEvent("不要ファイルの削除処理中..."));
 				var items:XMLList = _workspace.medialist.item;
 				var files:XMLList = _workspace.deletes.file;
 				for (var i:int = 0; i < files.length(); i++) {
@@ -1562,6 +1563,19 @@
 					datas += items.movie.(text() == path);
 					if (datas.length() > 0) {
 						delete files[i];
+					} else {
+						var name:String = files[i].text();
+						if (name.indexOf("switch-data:") == 0) {
+							name = name.substr(12);
+						}
+						var file:File = _workDir.resolvePath("datas/" + display.address + "/" + name);
+						try {
+							if (file && file.exists) {
+								file.deleteFile();
+								trace("delete: " + file.nativePath);
+							}
+						} catch (error:Error) {
+						}						
 					}
 				}
 			}
@@ -1614,12 +1628,13 @@
 							try {
 								var result:Object = JSON.decode(json);
 								if (!result.update) {
-									_uploader.setMessage("更新に失敗しました");
+									_uploader.setMessage("保存に失敗しました");
 								} else {
 									mediaSelector.clearUploadFiles();
 									PopUpManager.removePopUp(_uploader);
 									_uploader = null;
 									uneditedWorkspace();
+									dispatchEvent(new OperationStatusEvent("保存しました"));
 									copyWorkspace();
 								}
 							} catch (error:Error) {
