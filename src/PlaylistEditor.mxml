@@ -87,7 +87,7 @@
 		}
 
 		override protected final function dragDropHandler(event:DragEvent):void {
-			dispatchEvent(new EditedWorkspaceEvent());
+			//dispatchEvent(new EditedWorkspaceEvent());
 
 			var pos:int = calculateDropIndex(event);
 			if (event.dragInitiator is PlaylistEditor) {
@@ -107,7 +107,8 @@
 				var items:Array = event.dragSource.dataForFormat('items') as Array;
 				var data:XML = <item />;
 				data.setChildren(items[0].@id.toString());
-				dataProvider.addItemAt(data, pos);				
+				dataProvider.addItemAt(data, pos);
+				dispatchEvent(new PlaylistItemEvent(PlaylistItemEvent.ADD_PLAYLIST_ITEM));
 			} else {
 				Alert.show("プレイリストに登録できるのは99アイテムまでです");
 			}

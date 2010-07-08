@@ -514,6 +514,9 @@
 			mediaSelector.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				updateStatusText(event.text);
 			});
+			playlistEditor.addEventListener(PlaylistItemEvent.ADD_PLAYLIST_ITEM, function(event:PlaylistItemEvent):void {
+				setTextEditMode();
+			});
 			initDisplayConfig();
 		}
 
@@ -943,6 +946,9 @@
 				editedWorkspace(event);
 				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
 			});
+			//playlistEditor.addEventListener(PlaylistItemEvent.ADD_PLAYLIST_ITEM, function(event:CollectionEvent):void {
+			//	setTextEditMode();
+			//});
 			scheduleEditor.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
 				editedWorkspace(event);
 			});
@@ -1131,6 +1137,10 @@
 
 		/** 編集モード変更 */
 		private final function toggleEditMode(event:Event):void {
+			if (_editable && _editedDisplay) {
+				Alert.show("SAVEしないとロックできません");
+				return;
+			}
 			_editable = !_editable;
 			if (_editable) {
 				editMode.setStyle("icon", _unlockIcon);
@@ -1210,6 +1220,18 @@
 				colorPicker.selectedColor = 0x111111;		
 			}
 			playlistName.text = _playlist.@name;
+			if (_editable) {
+				colorPicker.enabled = true;
+				playlistName.editable = true;
+				playlistEditor.dragEnabled = true;
+				deletePlaylistItemButton.enabled = true;
+			}
+			setTextEditMode();
+			selectContent();
+		}
+
+		// テキストの編集可否を設定します
+		private final function setTextEditMode():void {
 			var useText:Boolean = false;
 			var items:XMLList = _playlist.item;
 			for (var i:int = 0; i < items.length(); i++) {
@@ -1218,12 +1240,6 @@
 					useText = true;
 					break;
 				}
-			}
-			if (_editable) {
-				colorPicker.enabled = true;
-				playlistName.editable = true;
-				playlistEditor.dragEnabled = true;
-				deletePlaylistItemButton.enabled = true;
 			}
 			if (useText && !isLocalMode()) {
 				var loader:URLLoader = new URLLoader();
@@ -1259,7 +1275,6 @@
 				textUpdateButton.visible = false;
 			}
 			//textUpdateButton.visible = false;
-			selectContent();
 		}
 
 		/** コンテンツ選択 */
@@ -1289,6 +1304,7 @@
 			colorPicker.enabled = false;
 			playlistName.editable = false;
 			playlistEditor.dragEnabled = false;
+			playlistEditor.dataProvider = _playlist.item;
 			deletePlaylistItemButton.enabled = false;
 		}
 
@@ -1387,6 +1403,7 @@
 				if (i > 0) playlistEditor.scrollToIndex(i - 1);
 				dispatchEvent(new EditedWorkspaceEvent());
 			}
+			setTextEditMode();
 		}
 
 		/** プレイリストのフィルタリング */

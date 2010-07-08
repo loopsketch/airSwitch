@@ -262,7 +262,7 @@
 				data.@name = name;
 				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "m");
 			}
-			dispatchEvent(new EditedWorkspaceEvent());
+			//dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		//override protected final function dragCompleteHandler(event:DragEvent):void {
