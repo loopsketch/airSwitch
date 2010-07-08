@@ -47,7 +47,7 @@
 				}
 			}
 			selectedValue = checkbox.selected;
-			trace("selected " + selectedValue);
+			//trace("selected " + selectedValue);
 		}
 
 		/**

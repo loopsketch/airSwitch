@@ -223,6 +223,7 @@
 								itemRenderer="RadioButtonRenderer" editorDataField="selected" rendererIsEditor="true" />
 							<mx:DataGridColumn headerText="出力" width="50" dataField="out"
 								itemRenderer="CheckBoxRenderer" editorDataField="selectedValue" rendererIsEditor="true" />
+							<mx:DataGridColumn headerText="状態" width="50" dataField="status" editable="false" textAlign="center" />
 							<mx:DataGridColumn headerText="ディスプレイ名" width="120" dataField="name" />
 							<mx:DataGridColumn headerText="IPアドレス" width="120" dataField="address" />
 							<mx:DataGridColumn headerText="説明" dataField="description" />
@@ -408,7 +409,7 @@
 		import mx.managers.PopUpManager;
 
 		import com.adobe.serialization.json.JSON;  
-
+		import com.rails2u.net.URLLoaderWithTimeout;
 
 		[Embed(source="../images/switch_logo.png")]
         [Bindable] private var _logo:Class;
@@ -456,7 +457,6 @@
 		private var _oldDataGridEvent:DataGridEvent;
 
 		private var _monitorDisplay:int = 0;
-		private var _displayCheckTimer:Timer = null;
 		private var _previewTimer:Timer = null;
 		private var _statusTimer:Timer = null;
 		private var _mediaSyncronizer:MediaSyncronizer = null;
@@ -625,38 +625,46 @@
 				} finally {
 					fs.close();		
 				}
-				if (_displayCheckTimer == null) {
-					_monitorDisplay = 0;
-					_displayCheckTimer = new Timer(1000, 0);
-					_displayCheckTimer.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
-						if (_displays.display.length() > 0) {
-							var loader:URLLoader = new URLLoader();
-							loader.addEventListener(Event.COMPLETE, updateDisplayStatus);
-							loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
-								trace('remote display no result');
-								//var display:XML = _displays.display[_monitorDisplay];
-								//dispatchEvent(new OperationStatusEvent("![" + display.name + "]に接続できません"));
-								_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
-							});
-							var display:XML = _displays.display[_monitorDisplay];
-							var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/get/status");
-							request.cacheResponse = false;
-							request.useCache = false;
-							loader.load(request);							
-						}
-					});
-					_displayCheckTimer.start();
-				}
+				_monitorDisplay = 0;
+				checkDisplayStatus();
 				trace('load displays: ' + _displays.display.length());
+			}
+		}
+
+		// ディスプレイステータスのチェック
+		private final function checkDisplayStatus():void {
+			if (_displays.display.length() > 0) {
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, updateDisplayStatus);
+				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+					trace("'/get/remote-copy-status' no result: " + _monitorDisplay);
+					//var display:XML = _displays.display[_monitorDisplay];
+					//dispatchEvent(new OperationStatusEvent("![" + display.name + "]に接続できません"));
+					var display:XML = _displays.display[_monitorDisplay];
+					display.status = '-';
+					_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
+					var t:Timer = new Timer(1000, 1);
+					t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+						checkDisplayStatus();
+					});
+					t.start();
+				});
+				var display:XML = _displays.display[_monitorDisplay];
+				var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/get/remote-copy-status");
+				request.cacheResponse = false;
+				request.useCache = false;
+				loader.load(request);	
 			}
 		}
 
 		/** ディスプレイステータスの更新 */
 		private final function updateDisplayStatus(event:Event):void {
+			//trace('remote display status');
 			var loader:URLLoader = URLLoader(event.currentTarget);
 			var json:String = loader.data;
 			try {
 				var display:XML = _displays.display[_monitorDisplay];
+				display.status = 'OK';
 				var status:Object = JSON.decode(json);
 				var remoteCopy:String = status['remote-copy'];
 				if (remoteCopy) {
@@ -692,6 +700,11 @@
 			}
 			_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
 			_statusCount = (_statusCount + 1) % 10;
+			var t:Timer = new Timer(1000, 1);
+			t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+				checkDisplayStatus();
+			});
+			t.start();
 		}
 
 		/** 編集ディスプレイの取得 */
@@ -931,6 +944,7 @@
 			}
 		}
 
+		// 操作を開始する
 		private final function startOperation(display:XML):void {
 			playlistSelector.setData(_workspace);
 			mediaSelector.setData(_workDir, display.address.text(), _workspace);
@@ -946,9 +960,6 @@
 				editedWorkspace(event);
 				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
 			});
-			//playlistEditor.addEventListener(PlaylistItemEvent.ADD_PLAYLIST_ITEM, function(event:CollectionEvent):void {
-			//	setTextEditMode();
-			//});
 			scheduleEditor.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
 				editedWorkspace(event);
 			});
@@ -963,7 +974,7 @@
 					with (loader.contentLoaderInfo) {
 						addEventListener(Event.COMPLETE, updatePreviewImage);
 						addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
-							trace('remote display no result');
+							trace("'/get/snapshot' no result");
 							//event.target.loader.unload();
 						});
 					}
@@ -1009,7 +1020,8 @@
 					var loader:URLLoader = new URLLoader();
 					loader.addEventListener(Event.COMPLETE, updateStatus);
 					loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
-						trace('remote display no result');
+						trace("'/get/status' no result");
+						// event.target.loader.unload();
 					});
 					var request:URLRequest = new URLRequest(baseURL() + "/get/status");
 					request.cacheResponse = false;
