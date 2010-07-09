@@ -38,6 +38,11 @@
 		]);
 
 
+		// ローカルモードのdisplayかどうか
+		public static function isLocalMode(display:XML):Boolean {
+			return (display && display.address.text().indexOf("127.0.0.") == 0);
+		}
+
 		/** 編集ディスプレイの取得 */
 		public static function getEditDisplay(displays:XML):XML {
 			if (displays) {

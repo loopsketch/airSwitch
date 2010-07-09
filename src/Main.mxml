@@ -375,7 +375,7 @@
 	</mx:ViewStack>
 	<mx:HRule width="100%" alpha="0.5" />
 	<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
-		<mx:Label id="statusText" text="" styleName="statusNormal" />					
+		<mx:Label id="statusText" text="　" styleName="statusNormal" />					
 	</mx:HBox>
 	<!--
 	<mx:Label width="100%" text="copyright(c)2009-{_year} {_copyright} allrights reserved." styleName="footerText" />
@@ -653,27 +653,38 @@
 		// ディスプレイステータスのチェック
 		private final function checkDisplayStatus():void {
 			if (_displays.display.length() > 0) {
+				var display:XML = _displays.display[_monitorDisplay];
+				display.status = ' ';
 				var loader:URLLoader = new URLLoader();
 				loader.addEventListener(Event.COMPLETE, updateDisplayStatus);
 				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
-					trace("'/get/remote-copy-status' no result: " + _monitorDisplay);
+					trace("'/get/display-status' no result: " + _monitorDisplay);
 					//var display:XML = _displays.display[_monitorDisplay];
 					//dispatchEvent(new OperationStatusEvent("![" + display.name + "]に接続できません"));
 					var display:XML = _displays.display[_monitorDisplay];
 					display.status = '-';
 					_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
-					var t:Timer = new Timer(1000, 1);
-					t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
-						checkDisplayStatus();
-					});
-					t.start();
+					startDisplayCheck();
 				});
-				var display:XML = _displays.display[_monitorDisplay];
-				var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/get/display-status");
-				request.cacheResponse = false;
-				request.useCache = false;
-				loader.load(request);	
+				if (SwitchUtils.isLocalMode(display)) {
+					display.status = 'OK';
+					startDisplayCheck();
+				} else {
+					var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/get/display-status");
+					request.cacheResponse = false;
+					request.useCache = false;
+					loader.load(request);	
+				}
 			}
+		}
+
+		// ディスプレイチェックの開始
+		private final function startDisplayCheck():void {
+			var t:Timer = new Timer(1000, 1);
+			t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+				checkDisplayStatus();
+			});
+			t.start();			
 		}
 
 		/** ディスプレイステータスの更新 */
@@ -719,11 +730,7 @@
 			}
 			_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
 			_statusCount = (_statusCount + 1) % 10;
-			var t:Timer = new Timer(1000, 1);
-			t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
-				checkDisplayStatus();
-			});
-			t.start();
+			startDisplayCheck();
 		}
 
 		/** 編集ディスプレイの取得 */
@@ -738,7 +745,7 @@
 
 		private final function isLocalMode():Boolean {
 			var display:XML = getEditDisplay();
-			return (display && display.address.text().indexOf("127.0.0.") == 0);
+			return SwitchUtils.isLocalMode(display);
 		}
 
 		/** DataGrid選択Index取得処理 */
