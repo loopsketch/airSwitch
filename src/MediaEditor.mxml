@@ -68,7 +68,7 @@
 								} else {
 									Alert.show("[" + file.name + "]はこのテンプレートに設定できません");
 								}
-								var items:XMLList = outerDocument.workspace.medialist.item.copy();
+								var items:XMLList = outerDocument.selector.workspace.medialist.item.copy();
 								for (var i:int = 0; i < items.length(); i++) {
 									if (items[i].@id == outerDocument._item.@id) {
 										delete items[i];
@@ -161,7 +161,6 @@
 	<mx:Script><![CDATA[
 		import mx.managers.PopUpManager;
 
-		public var workspace:XML;
 		public var selector:MediaSelector;
 		public var baseItem:XML = null;
 
@@ -171,12 +170,13 @@
 		[Bindable]
 		public var _item:XML;
 
+		// PopUpManager.centerPopUp()した後に呼ばれる
 		private final function init():void {
 			if (baseItem) {
 				_item = new XML(baseItem);
 			} else {
 				template.dataProvider.addItem(<item />);
-				for each (var item:XML in workspace.templates.item) {
+				for each (var item:XML in selector.workspace.templates.item) {
 					template.dataProvider.addItem(new XML(item));
 				}
 				template.selectedIndex = 0;
@@ -208,7 +208,7 @@
 			if (mediaName.text.length == 0) return;
 			if (!_item.hasOwnProperty("@id")) {
 				// 新規登録
-				_item.@id = SwitchUtils.createNewID(workspace.medialist.item, "m");
+				_item.@id = SwitchUtils.createNewID(selector.workspace.medialist.item, "m");
 				_item.@name = mediaName.text;
 				_item.@duration = duration.text;
 				var pos:int = selector.dataProvider.length;
@@ -230,6 +230,7 @@
 				trace("edit item: " + baseItem.toXMLString());
 				//selector.dispatchEvent(new OperationStatusEvent(baseItem.@name + "を修正しました"));
 				if (oldFiles.length > 0) {
+					var workspace:XML = selector.workspace;
 					if (workspace.deletes.length() == 0) {
 						workspace.appendChild(<deletes />);
 					}

@@ -375,7 +375,7 @@
 	</mx:ViewStack>
 	<mx:HRule width="100%" alpha="0.5" />
 	<mx:HBox width="100%" backgroundColor="#000000" verticalGap="0" >
-		<mx:Label id="statusText" text="　" styleName="statusNormal" />					
+		<mx:Label id="statusText" width="1000" text="　" styleName="statusNormal" />					
 	</mx:HBox>
 	<!--
 	<mx:Label width="100%" text="copyright(c)2009-{_year} {_copyright} allrights reserved." styleName="footerText" />
@@ -630,6 +630,7 @@
 
 		/** ディスプレイ設定の初期化 */
 		private final function initDisplayConfig():void {
+			dispatchEvent(new OperationStatusEvent(' '));
 			stopPreview();
 			stopStatus();
 			if (_displays.display.length() == 0) {
@@ -989,6 +990,26 @@
 			scheduleEditor.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
 				editedWorkspace(event);
 			});
+
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				var loader:URLLoader = URLLoader(event.currentTarget);
+				var json:String = loader.data;
+				try {
+					var status:Object = JSON.decode(json);
+					var fonts:Array = status['fonts'];
+					mediaSelector.setFonts(fonts);
+					trace('fonts: ' + fonts);
+				} catch (error:Error) {
+					trace(error.message + ":" + json);
+				}
+			});
+			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+			});
+			var request:URLRequest = new URLRequest(baseURL() + "/get/fonts");
+			request.cacheResponse = false;
+			request.useCache = false;
+			loader.load(request);
 		}
 
 		/** プレビューの開始 */
@@ -1464,7 +1485,7 @@
 			var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
 			var editor:MediaEditor = popup as MediaEditor;
 			editor.selector = mediaSelector;
-			editor.workspace = _workspace;
+			//editor.workspace = _workspace;
 			PopUpManager.centerPopUp(editor);
 		}
 

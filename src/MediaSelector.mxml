@@ -19,7 +19,6 @@
 									popup = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
 									var editor:MediaEditor = popup as MediaEditor;
 									editor.selector = outerDocument;
-									editor.workspace = outerDocument.workspace;
 									editor.baseItem = item;
 								//} else {
 								//	popup = PopUpManager.createPopUp(Application.application as DisplayObject, PreviewWindow, true);
@@ -62,10 +61,15 @@
 		private var _workDir:File;
 		private var _address:String;
 		private var _workspace:XML;
+		private var _fonts:Array;
 		private var _uploadFiles:Object = {};
 
 		public final function get workspace():XML {
 			return _workspace;
+		}
+
+		public final function get fonts():Array {
+			return _fonts;
 		}
 
 		private final function init():void {
@@ -80,6 +84,11 @@
 			_workspace = workspace;
 			dataProvider = workspace.medialist.item;
 			_uploadFiles = {};
+		}
+
+		// フォント一覧を設定します
+		public final function setFonts(fonts:Array):void {
+			_fonts = fonts;
 		}
 
 		/** 選択アイテムの削除 */

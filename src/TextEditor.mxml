@@ -12,6 +12,15 @@
 	<mx:Label id="position" text="" styleName="statusText" />
 	<mx:Canvas id="preview" backgroundColor="#000000" width="580" height="50" />
 	<mx:Form id="textEditForm" width="100%" height="100%">
+		<mx:FormItem label="フォント" >
+			<mx:ComboBox id="fonts" change="onChange('font')" />
+		</mx:FormItem>
+		<mx:FormItem label="文字色" >
+			<mx:HBox>
+				<mx:ColorPicker id="col1" editable="true" selectedColor="#ffffff" change="onChange('c1')" />
+				<mx:ColorPicker id="col2" editable="true" selectedColor="#cccccc" change="onChange('c2')" />
+			</mx:HBox>
+		</mx:FormItem>
 		<mx:FormItem label="テキストパラメータ" >
 			<mx:TextInput id="inputParams" width="450" text="" />
 		</mx:FormItem>
@@ -32,6 +41,10 @@
 
 		public final function editItem(selector:MediaSelector, editItem:Object, i:int):void {
 			_selector = selector;
+			var fontList:Array = [''];
+			fontList = fontList.concat(selector.fonts);
+			fonts.dataProvider = fontList;
+
 			if (editItem is XML) {
 				_editItem = editItem as XML;
 			}
@@ -60,6 +73,19 @@
 				loader.load(new URLRequest(f.nativePath));
 			}
 			inputParams.text = list[_index].text();
+
+			var map:Object = new Object();
+			var params:Array = list[_index].text().split(',');
+			for each (var pair:String in params) {
+				var data:Array = pair.split('=', 2);
+				if (data[0] == 'font') {
+					fonts.selectedItem = data[1];
+				} else if (data[0] == 'c1') {
+					col1.selectedColor = parseInt(data[1], 16);
+				} else if (data[0] == 'c2') {
+					col2.selectedColor = parseInt(data[1], 16);
+				}
+			}
 		}
 
 		private final function updatePreviewImage(event:Event):void {
@@ -79,6 +105,43 @@
 			//if (preview.getChildren().length >= 2) {
 			//	preview.removeChildAt(1);
 			//}
+		}
+
+		// 変更
+		private final function onChange(key:String):void {
+			var params:Array = inputParams.text.split(',');
+			var update:Boolean = false;
+			var hex:String;
+			for (var i:int = 0; i < params.length; i++) {
+				var data:Array = params[i].split('=', 2);
+				if (key == 'font' && data[0] == 'font') {
+					data[1] = fonts.selectedItem;
+					update = true;
+				} else if (key == 'c1' && data[0] == 'c1') {
+					hex = '00000' + col1.selectedColor.toString(16);
+					data[1] = 'ff' + hex.substr(-6);
+					update = true;
+				} else if (key == 'c2' && data[0] == 'c2') {
+					hex = '00000' + col2.selectedColor.toString(16);
+					data[1] = 'ff' + hex.substr(-6);
+					update = true;
+				}
+				if (update) {
+					params[i] = data[0] + '=' + data[1];
+				}
+			}
+			if (!update) {
+				if (key == 'font') {
+					params.push('font=' + fonts.selectedItem);
+				} else if (key == 'c1') {
+					hex = '00000' + col1.selectedColor.toString(16);
+					params.push('c1=ff' + hex.substr(-6));
+				} else if (key == 'c2') {
+					hex = '00000' + col2.selectedColor.toString(16);
+					params.push('c2=ff' + hex.substr(-6));
+				}
+			}
+			inputParams.text = params.join(',');
 		}
 
 		/** 更新 */
