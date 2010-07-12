@@ -75,7 +75,9 @@
 			inputParams.text = list[_index].text();
 
 			var map:Object = new Object();
-			var params:Array = list[_index].text().split(',');
+			var s:String = list[_index].text();
+			s = s.substr(s.indexOf('?') + 1);
+			var params:Array = s.split(',');
 			for each (var pair:String in params) {
 				var data:Array = pair.split('=', 2);
 				if (data[0] == 'font') {
@@ -109,10 +111,12 @@
 
 		// 変更
 		private final function onChange(key:String):void {
-			var params:Array = inputParams.text.split(',');
+			var i:int = inputParams.text.indexOf('?');
+			var file:String = inputParams.text.substr(0, i);
+			var params:Array = inputParams.text.substr(i + 1).split(',');
 			var update:Boolean = false;
 			var hex:String;
-			for (var i:int = 0; i < params.length; i++) {
+			for (i = 0; i < params.length; i++) {
 				var data:Array = params[i].split('=', 2);
 				if (key == 'font' && data[0] == 'font') {
 					data[1] = fonts.selectedItem;
@@ -141,7 +145,7 @@
 					params.push('c2=ff' + hex.substr(-6));
 				}
 			}
-			inputParams.text = params.join(',');
+			inputParams.text = file + '?' + params.join(',');
 		}
 
 		/** 更新 */
