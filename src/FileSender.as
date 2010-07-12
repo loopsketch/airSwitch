@@ -44,7 +44,8 @@
 			var request:URLRequest = new URLRequest(SwitchUtils.baseURL(_address) + "/upload");
 			request.method = URLRequestMethod.POST;
 			var variables:URLVariables = new URLVariables();
-			if (_file.extension == "ttf") {
+			var fontPat:RegExp = /ttf|ttc/i;
+			if (fontPat.test(_file.extension)) {
 				// フォント
 				_path = "/fonts/" + _file.name;
 			} else {
