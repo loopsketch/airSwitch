@@ -329,7 +329,7 @@
 								</mx:HBox>
 								<mx:Label text="{_preparedContent}" color="#cccccc" width="265" textAlign="right" paddingLeft="10" />
 							</mx:VBox>
-							<mx:Button id="swButton" label="SVVITCH" click="switchContent(event);" />	
+							<mx:Button id="swButton" label="SVVITCH" click="switchContent()" />	
 						</mx:HBox>
 						<mx:TabNavigator id="detailTab" backgroundColor="#333333"  paddingBottom="0">
 							<mx:VBox width="100%" label="プレイリスト編成" paddingLeft="4" paddingRight="4" paddingBottom="4">
@@ -511,6 +511,15 @@
 			addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
 				updateStatusText(event.text);
+			});
+			addEventListener(KeyboardEvent.KEY_UP, function(event:KeyboardEvent):void {
+				if (!_editable && event.controlKey) {
+					trace('key:' + event.keyCode);
+					switch (event.keyCode) {
+					case 13: // Enterキー
+						switchContent();
+					}
+				}
 			});
 			playlistSelector.addEventListener(KeyboardEvent.KEY_UP, function(event:KeyboardEvent):void {
 				switch (event.keyCode) {
@@ -1527,7 +1536,7 @@
 		}
 
 		/** 切替 */
-		private final function switchContent(event:Event):void {
+		private final function switchContent():void {
 			var loader:URLLoader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 				var loader:URLLoader = URLLoader(event.currentTarget);
