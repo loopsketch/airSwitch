@@ -192,15 +192,16 @@
 		/** テンプレートの変更 */
 		private final function changeTemplate():void {
 			trace("template change" );
-//			_item.setChildren(template.selectedItem.children());
-			mediaItemList.dataProvider.removeAll();
+			//mediaItemList.dataProvider.removeAll();
 			var sel:XML = template.selectedItem as XML;
 			_item.@type = sel.@type;
 			duration.text = sel.@duration;
 			_item.@template = sel.@id;
-			for each (var item:XML in sel.children()) {
-				mediaItemList.dataProvider.addItem(new XML(item));
-			}
+			_item.setChildren(new XMLList(sel.children()));
+			mediaItemList.dataProvider = _item.children();
+			//for each (var item:XML in sel.children()) {
+			//	mediaItemList.dataProvider.addItem(new XML(item));
+			//}
 		}
 
 		/** 登録処理 */

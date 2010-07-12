@@ -170,14 +170,19 @@
 		}
 
 		public final function getFile(path:String):File {
-			if (path.indexOf("switch-data:") == 0) {
-				var f:File = _workDir.resolvePath("datas/" + _address + path.substring(12));
-				if (!f.exists) {
-					f = _workDir.resolvePath("temp/" + _address + path.substring(12));
+			try {
+				if (path.indexOf("switch-data:") == 0) {
+					var f:File = _workDir.resolvePath("datas/" + _address + path.substring(12));
+					if (!f.exists) {
+						f = _workDir.resolvePath("temp/" + _address + path.substring(12));
+					}
+					return f;
 				}
-				return f;
+				return new File(path);
+			} catch (error:Error) {
+				trace("faild not file format: ", error.message);
 			}
-			return new File(path);
+			return null;
 		}
 
 		/** OSからのドラックイン */

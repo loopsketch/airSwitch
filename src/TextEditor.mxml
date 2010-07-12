@@ -69,8 +69,10 @@
 			if (i >= 0) {
 				// 指定pathの"switch-data:"は除去して処理
 				var f:File = _selector.getFile(list[i].text());
-				trace('image: ' + f.nativePath);
-				loader.load(new URLRequest(f.nativePath));
+				if (f) {
+					trace('image: ' + f.nativePath);
+					loader.load(new URLRequest(f.nativePath));
+				}
 			}
 			inputParams.text = list[_index].text();
 
