@@ -58,7 +58,7 @@
 					}
 				}
 				if (_item.hasOwnProperty("@next")) {
-					var next:Array = _item.@next.split(/\s+|\-/);
+					var next:Array = _item.@next.split(/\s+/);
 					for each (var m:Object in _modeItems) {
 						if (next[0] == m.data) {
 							playmode.selectedItem = m;
@@ -67,15 +67,16 @@
 							break;
 						}
 					}
-					if (next.length == 3) {
+					if (next.length == 2) {
+						var param:Array = next[1].split(/\-+/, 2);
 						for each (var data:Object in plSelector.dataProvider) {
-							if (data.@id == next[1]) {
+							if (data.@id == param[0]) {
 								trace('next playlist: ' + data.@id);
 								plSelector.selectedItem = data;
 								changePlaylist();
 							}
 						}
-						itemSelector.selectedIndex = parseInt(next[2]);
+						itemSelector.selectedIndex = parseInt(param[1]);
 					}
 				} else {
 					changePlaymode();
