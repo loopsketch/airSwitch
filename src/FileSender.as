@@ -26,9 +26,12 @@
 	 */
 	public class FileSender extends EventDispatcher {
 
+		private var FONT_FILE_PAT:RegExp = /ttf|ttc/i;
+
 		private var _address:String = null;
 		private var _file:File = null;
 		private var _path:String = null;
+
 
 		public function FileSender(address:String, file:File) {
 			_address = address;
@@ -44,8 +47,7 @@
 			var request:URLRequest = new URLRequest(SwitchUtils.baseURL(_address) + "/upload");
 			request.method = URLRequestMethod.POST;
 			var variables:URLVariables = new URLVariables();
-			var fontPat:RegExp = /ttf|ttc/i;
-			if (fontPat.test(_file.extension)) {
+			if (FONT_FILE_PAT.test(_file.extension)) {
 				// フォント
 				_path = "/fonts/" + _file.name;
 			} else {
@@ -88,12 +90,17 @@
 			request.useCache = false;
 			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 				var workspace:XML = new XML(event.target.data);
-				if (_file.extension == "ttf") {
+				if (FONT_FILE_PAT.test(_file.extension)) {
 					// フォント追加
 					var file:XML = <file />;
 					file.setChildren("switch-data:" + _path);
+					if (!workspace.hasOwnProperty('fonts')) {
+						workspace.appendChild(<fonts/>);
+					}
 					workspace.fonts.appendChild(file);
 					uploadWorkspace(workspace);
+				} else {
+					dispatchEvent(new OperationStatusEvent("送信完了しました"));
 				}
 			});
 			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
