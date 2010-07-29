@@ -14,8 +14,8 @@
 		}
 
 		Application {
+			font-size: 13px;
 			color: #cccccc;
-			fontSize: 13px;
 			background-color: #333333;
 			padding-top: 20;
 			padding-left: 4;
@@ -57,6 +57,7 @@
 		}
 
 		TextInput {
+			fontFamily: monospace;
 			border-style: none;
 			background-color: #111111;
 			background-alpha: 0.5;
@@ -64,6 +65,7 @@
 		}
 
 		TextArea {
+			fontFamily: monospace;
 			border-style: none;
 			background-color: #111111;
 			background-alpha: 0.5;
