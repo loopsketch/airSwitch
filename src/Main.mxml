@@ -452,7 +452,8 @@
 		[Bindable] public var _preparedPlaylist:String = "";
 		[Bindable] public var _preparedContent:String = "";
 		[Bindable] public var _brightness:int = 50;
-		public var _statusCount:int = 0;
+		private var _signature:String;
+		private var _statusCount:int = 0;
 		private var _action:String;
 		private var _transition:String;
 		private var _delayedUpdate:String;
@@ -961,6 +962,7 @@
 				request.cacheResponse = false;
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+					_signature = null;
 					_workspace = new XML(event.target.data);
 					var display:XML = getEditDisplay();
 					saveWorkspaceFile(display);
@@ -1057,6 +1059,7 @@
 			image.setStyle("removedEffect", "Fade");			
 			image.load(event.target.content); // イメージの更新
 			preview.addChildAt(image, 0);
+			event.target.loader.removeEventListener(Event.COMPLETE, updatePreviewImage);
 			event.target.loader.unload();
 			if (preview.getChildren().length >= 2) {
 				preview.removeChildAt(1);
@@ -1095,6 +1098,9 @@
 		/** ステータスの更新 */
 		private final function updateStatus(event:Event):void {
 			var loader:URLLoader = URLLoader(event.currentTarget);
+			loader.removeEventListener(Event.COMPLETE, updateStatus);
+			if (_uploader) return;
+
 			var json:String = loader.data;
 			try {
 				var status:Object = JSON.decode(json);
@@ -1134,6 +1140,13 @@
 					} else {
 						transition.selectedIndex = 0;
 					}
+				}
+				if (_signature == null) {
+					_signature = status['workspace'];
+					trace('workspace: ' + _signature);
+				} else if (_signature != status['workspace']) {
+					_signature = status['workspace'];
+					Alert.show("ワークスペースが更新されました");
 				}
 				//if (status['set-text']) {
 				//	var data:Array = status['set-text'].split(":", 2);
@@ -1679,6 +1692,7 @@
 					// 転送処理
 					_uploader.addFile(workspace.name, workspace);
 					_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {
+						_signature = null;
 						var loader:URLLoader = new URLLoader();
 						loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 							trace("update complete");
@@ -1691,7 +1705,6 @@
 								} else {
 									mediaSelector.clearUploadFiles();
 									PopUpManager.removePopUp(_uploader);
-									_uploader = null;
 									uneditedWorkspace();
 									dispatchEvent(new OperationStatusEvent("保存しました"));
 									copyWorkspace();
@@ -1699,9 +1712,11 @@
 							} catch (error:Error) {
 								trace(error.message + ":" + json);
 							}
+							_uploader = null;
 						});
 						loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
 							trace('remote display no result');
+							_uploader = null;
 						});
 						var request:URLRequest = new URLRequest(baseURL() + "/update");
 						request.cacheResponse = false;
