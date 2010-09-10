@@ -70,6 +70,10 @@
 					map[items[j].text()] = "";
 				}
 			}
+			var fonts:XMLList = _workspace.fonts.file;
+			for (i = 0; i < fonts.length(); i++) {
+				map[fonts[i].text()] = "";
+			}
 			_mediaSet = new Array();
 			for (var name:String in map) {
 				if (name.indexOf("switch-data:") == 0) {
