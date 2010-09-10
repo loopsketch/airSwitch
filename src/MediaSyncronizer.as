@@ -66,6 +66,7 @@
 			for (var i:int = 0; i < medias.length(); i++) {
 				var items:XMLList = medias[i].movie;
 				items += medias[i].image;
+				items += medias[i].flash;
 				for (var j:int = 0; j < items.length(); j++) {
 					map[items[j].text()] = "";
 				}

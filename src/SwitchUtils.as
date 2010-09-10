@@ -138,7 +138,7 @@
 
 		/** 拡張子チェック */
 		public static function checkFileExt(path:String):Boolean {
-			if (checkImageFileExt(path) || checkMovieFileExt(path)) return true;
+			if (checkImageFileExt(path) || checkMovieFileExt(path) || checkFlashFileExt(path)) return true;
 			return false;
 		}
 
@@ -154,6 +154,15 @@
 		/**　動画ファイルの拡張子チェック　*/
 		public static function checkMovieFileExt(path:String):Boolean {
 			var allows:Array = [".mp4", ".mpg", ".mov", ".wmv", ".avi"];
+			for (var i:int = 0; i < allows.length; i++) {
+				if (path.toLocaleLowerCase().substr(path.length - allows[i].length) == allows[i]) return true;
+			}
+			return false;
+		}
+
+		/**　Adobe Flashファイルの拡張子チェック　*/
+		public static function checkFlashFileExt(path:String):Boolean {
+			var allows:Array = [".swf"];
 			for (var i:int = 0; i < allows.length; i++) {
 				if (path.toLocaleLowerCase().substr(path.length - allows[i].length) == allows[i]) return true;
 			}

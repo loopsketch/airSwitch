@@ -45,6 +45,9 @@
 							} else if (name == "movie") {
 								filter = new FileFilter("動画ファイル(.mp4/.mpg/.mov/.wmv/.avi)", "*.mp4;*.mpg;*.mov;*.wmv;*.avi");
 								browseFile(filter);
+							} else if (name == "flash") {
+								filter = new FileFilter("Flashファイル(.swf)", "*.swf");
+								browseFile(filter);
 							} else if (name == "text") {
 								var popup:IFlexDisplayObject = PopUpManager.createPopUp(outerDocument as DisplayObject, TextEditor, true);
 								var editor:TextEditor = popup as TextEditor;
@@ -65,6 +68,8 @@
 									useFile = true;
 								} else if (item.name() == "movie" && SwitchUtils.checkMovieFileExt(file.name)) {
 									useFile = true;
+								} else if (item.name() == "flash" && SwitchUtils.checkFlashFileExt(file.name)) {
+									useFile = true;
 								} else {
 									Alert.show("[" + file.name + "]はこのテンプレートに設定できません");
 								}
@@ -77,6 +82,7 @@
 								}
 								var datas:XMLList = items.image.(text() == "switch-data:/media/" + file.name);
 								datas += items.movie.(text() == "switch-data:/media/" + file.name);
+								datas += items.flash.(text() == "switch-data:/media/" + file.name);
 								if (datas.length() > 0) {
 									trace("already registed " + file.name);
 									Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
@@ -136,6 +142,8 @@
 									return "静止画";
 								case "movie":
 									return "動画";
+								case "flash":
+									return "Flash";
 								case "text":
 									return "テキスト";
 							}
@@ -239,6 +247,7 @@
 					while ((path = oldFiles.pop()) != null) {
 						var datas:XMLList = workspace.items.image.(text() == path);
 						datas += workspace.items.movie.(text() == path);
+						datas += workspace.items.flash.(text() == path);
 						if (datas.length() == 0) {
 							var file:XML = <file />;
 							file.@date = SwitchUtils.formatDate(new Date());

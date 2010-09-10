@@ -97,7 +97,7 @@
 				var item:XML = dataProvider.getItemAt(selectedIndex);
 				var child:XMLList = item.children();
 				for (var j:int = 0; j < child.length(); j++) {
-					if (child[j].name() == "movie" || child[j].name() == "image") {
+					if (child[j].name() == "movie" || child[j].name() == "image" || child[j].name() == "flash") {
 						if (!removeUploadFile(child[j].text())) {
 							// アップロードファイルに無い場合は、削除指定をしておく
 							var data:XML = <file />;
@@ -226,6 +226,7 @@
 			// 同じファイル登録の検出
 			var items:XMLList = _workspace.medialist.item.image.(text() == "switch-data:/media/" + file.name);
 			items += _workspace.medialist.item.movie.(text() == "switch-data:/media/" + file.name);
+			items += _workspace.medialist.item.flash.(text() == "switch-data:/media/" + file.name);
 			if (items.length() > 0) {
 				Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
 				return;
@@ -243,6 +244,10 @@
 					item.@type = "movie";
 					item.appendChild(<movie />);
 					item.movie.setChildren("switch-data:/media/" + file.name);
+				} else if (SwitchUtils.checkFlashFileExt(file.name)) {
+					item.@type = "flash";
+					item.appendChild(<flash />);
+					item.flash.setChildren("switch-data:/media/" + file.name);
 				}
 				item.@name = file.name.substring(0, file.name.lastIndexOf("."));
 				if (dataProvider.length > pos) {
