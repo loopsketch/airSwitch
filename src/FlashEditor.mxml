@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	title="Flash編集" showCloseButton="false"
+	width="600" close="{onClose()}" creationComplete="init()" horizontalAlign="center">
+	<mx:Style>
+		.statusText {
+			color: #33cc33;
+			font-size: 11px;
+		}
+	</mx:Style>
+	<mx:HRule width="100%" alpha="0.2" />
+	<mx:Form id="textEditForm" width="100%" height="100%">
+		<mx:FormItem label="URL" >
+			<mx:TextInput id="inputParams" width="500" text="" />
+		</mx:FormItem>
+	</mx:Form>
+	<mx:HBox id="bar" width="100%" horizontalAlign="center">
+		<mx:Button id="update" label="更新" click="onUpdate()" />
+		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
+	</mx:HBox>
+	<mx:Script><![CDATA[
+		import flash.events.MouseEvent;
+		import flash.filesystem.File;
+		import mx.controls.Image;
+		import mx.managers.PopUpManager;
+
+		private var _selector:MediaSelector;
+		private var _editItem:XML = null;
+		private var _index:int;
+
+		public final function editItem(selector:MediaSelector, editItem:Object, i:int):void {
+			_selector = selector;
+			if (editItem is XML) {
+				_editItem = editItem as XML;
+			}
+			_index = i;
+		}
+
+		private final function init():void {
+			var list:XMLList = _editItem.children();
+			inputParams.text = list[_index].text();
+		}
+
+		/** 更新 */
+		private final function onUpdate():void {
+			var list:XMLList = _editItem.children();
+			list[_index].setChildren(inputParams.text);
+			onClose();
+		}
+
+		/** クローズ処理 */
+		private final function onClose():void {
+			PopUpManager.removePopUp(this);
+		}
+	]]></mx:Script>
+</mx:TitleWindow>

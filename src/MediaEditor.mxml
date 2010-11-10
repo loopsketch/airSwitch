@@ -7,10 +7,21 @@
 		<mx:FormItem label="メディア名" required="true" >
 			<mx:TextInput id="mediaName" text="" />
 		</mx:FormItem>
+		<mx:FormItem label="開始位置" >
+			<mx:HBox>
+				<mx:TextInput id="start" text="" />
+				<mx:Label text="ミリ秒" />				
+			</mx:HBox>
+		</mx:FormItem>
 		<mx:FormItem label="再生時間" >
 			<mx:HBox>
 				<mx:TextInput id="duration" text="" />
 				<mx:Label text="ミリ秒" />				
+			</mx:HBox>
+		</mx:FormItem>
+		<mx:FormItem label="パラメータ" >
+			<mx:HBox width="480">
+				<mx:TextInput id="params" text="" width="100%" />
 			</mx:HBox>
 		</mx:FormItem>
 		<mx:FormItem label="テンプレート">
@@ -31,6 +42,7 @@
 						import flash.net.FileReference;
 
 						import mx.controls.Alert;
+						import mx.events.CloseEvent;
 						import mx.core.IFlexDisplayObject;
 						import mx.managers.PopUpManager;
 
@@ -46,12 +58,14 @@
 								filter = new FileFilter("動画ファイル(.mp4/.mpg/.mov/.wmv/.avi)", "*.mp4;*.mpg;*.mov;*.wmv;*.avi");
 								browseFile(filter);
 							} else if (name == "flash") {
-								filter = new FileFilter("Flashファイル(.swf)", "*.swf");
-								browseFile(filter);
+								//filter = new FileFilter("Flashファイル(.swf)", "*.swf");
+								//browseFile(filter);
+								var popup:IFlexDisplayObject = PopUpManager.createPopUp(outerDocument as DisplayObject, FlashEditor, true);
+								(popup as FlashEditor).editItem(outerDocument.selector, outerDocument._item, outerDocument.mediaItemList.selectedIndex);
+								PopUpManager.centerPopUp(popup);
 							} else if (name == "text") {
-								var popup:IFlexDisplayObject = PopUpManager.createPopUp(outerDocument as DisplayObject, TextEditor, true);
-								var editor:TextEditor = popup as TextEditor;
-								editor.editItem(outerDocument.selector, outerDocument._item, outerDocument.mediaItemList.selectedIndex);
+								popup = PopUpManager.createPopUp(outerDocument as DisplayObject, TextEditor, true);
+								(popup as TextEditor).editItem(outerDocument.selector, outerDocument._item, outerDocument.mediaItemList.selectedIndex);
 								PopUpManager.centerPopUp(popup);
 							} 
 						}
@@ -85,46 +99,14 @@
 								datas += items.flash.(text() == "switch-data:/media/" + file.name);
 								if (datas.length() > 0) {
 									trace("already registed " + file.name);
-									Alert.show("[" + file.name + "]は既に登録済のファイル名です.");
+									Alert.show("[" + file.name + "]は他のメディアに登録済のファイル名です.設定しますか？", "確認", Alert.YES | Alert.NO, outerDocument, function(event:CloseEvent):void {
+										if (event.detail == Alert.YES) {
+											outerDocument.setFile(item, file);
+										}
+									});
 									useFile = false;
 								}
-								if (useFile) {
-									var key:String = item.text();
-									var path:String = "switch-data:/media/" + file.name;
-									if (key.indexOf("%%") == 0) {
-										// テンプレートへの設定
-										for each (var data:XML in outerDocument.mediaItemList.dataProvider) {
-											if (data.text() == key) {
-												data.setChildren(path);
-											}
-										}
-									} else {
-										var child:XMLList = outerDocument._item.children();
-										var used:int = 0;
-										var old:String = "";
-										for (i = 0; i < child.length(); i++ ) {
-											// メディアのアイテム一覧と比較し同じコンテンツ数を検出
-											if (child[i].text() == key) {
-												old = child[i].text();
-												used++;
-											}
-										}
-										trace("lookup old " + old);
-										if (used == 0 || (used == 1 && item.text() == old)) {
-											// 使用されていないか、選択中のアイテムでの使用なら古い素材を削除する
-											outerDocument.selector.removeUploadFile(old);
-											if (old != path) {
-												// 差し替えるファイルが同名でなければ、以前のファイルを削除リストに追加
-												outerDocument.oldFiles.push(old);
-												trace("add old(delete) file: " + old);
-											}
-										}
-										item.setChildren(path);
-									}
-									outerDocument.editFiles.push(path);
-									outerDocument.selector.addUploadFile("/media/" + file.name, file);
-									trace("selected: " + file.nativePath);
-								}
+								if (useFile) outerDocument.setFile(item, file);
 							});
 							file.browse([filter, allFilter]);
 						}
@@ -194,7 +176,48 @@
 				template.enabled = false;
 			}
 			mediaName.text = _item.@name;
+			start.text = _item.@start;
 			duration.text = _item.@duration;
+			params.text = _item.@params;
+		}
+
+		/** ファイル設定 */
+		public final function setFile(item:XML, file:File):void {
+			var key:String = item.text();
+			var path:String = "switch-data:/media/" + file.name;
+			if (key.indexOf("%%") == 0) {
+				// テンプレートへの設定
+				for each (var data:XML in mediaItemList.dataProvider) {
+					if (data.text() == key) {
+						data.setChildren(path);
+					}
+				}
+			} else {
+				var child:XMLList = _item.children();
+				var used:int = 0;
+				var old:String = "";
+				for (var i:int = 0; i < child.length(); i++ ) {
+					// メディアのアイテム一覧と比較し同じコンテンツ数を検出
+					if (child[i].text() == key) {
+						old = child[i].text();
+						used++;
+					}
+				}
+				trace("lookup old " + old);
+				if (used == 0 || (used == 1 && item.text() == old)) {
+					// 使用されていないか、選択中のアイテムでの使用なら古い素材を削除する
+					selector.removeUploadFile(old);
+					if (old != path) {
+						// 差し替えるファイルが同名でなければ、以前のファイルを削除リストに追加
+						oldFiles.push(old);
+						trace("add old(delete) file: " + old);
+					}
+				}
+				item.setChildren(path);
+			}
+			editFiles.push(path);
+			selector.addUploadFile("/media/" + file.name, file);
+			trace("selected: " + file.nativePath);
 		}
 
 		/** テンプレートの変更 */
@@ -203,7 +226,9 @@
 			//mediaItemList.dataProvider.removeAll();
 			var sel:XML = template.selectedItem as XML;
 			_item.@type = sel.@type;
+			start.text = sel.@start;
 			duration.text = sel.@duration;
+			params.text = sel.@params;
 			_item.@template = sel.@id;
 			_item.setChildren(new XMLList(sel.children()));
 			mediaItemList.dataProvider = _item.children();
@@ -219,7 +244,9 @@
 				// 新規登録
 				_item.@id = SwitchUtils.createNewID(selector.workspace.medialist.item, "m");
 				_item.@name = mediaName.text;
+				_item.@start = start.text;
 				_item.@duration = duration.text;
+				_item.@params = params.text;
 				var pos:int = selector.dataProvider.length;
 				selector.dataProvider.addItemAt(_item, pos);
 				selector.selectedIndex = pos;
@@ -234,7 +261,9 @@
 			} else {
 				// 修正
 				baseItem.@name = mediaName.text;
+				baseItem.@start = start.text;
 				baseItem.@duration = duration.text;
+				baseItem.@params = params.text;
 				baseItem.setChildren(_item.children());
 				trace("edit item: " + baseItem.toXMLString());
 				//selector.dispatchEvent(new OperationStatusEvent(baseItem.@name + "を修正しました"));
