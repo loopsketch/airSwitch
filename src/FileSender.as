@@ -54,6 +54,7 @@
 				_path = "/" + _file.name;
 			}
 			variables["path"] = _path;
+			variables["modified"] = SwitchUtils.formatDate(_file.modificationDate); // 2005-01-01 12:00:00
 			request.data = variables;
 			_file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, function(event:DataEvent):void {
 				var json:String = event.data;
