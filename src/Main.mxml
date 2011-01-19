@@ -719,16 +719,20 @@
 						dispatchEvent(new OperationStatusEvent("[" + display.name + "]" + remoteCopy.substr(2) + " 同期中..."));
 					} else if (remoteCopy == "10") {
 						dispatchEvent(new OperationStatusEvent("[" + display.name + "]同期処理が終了しました"));
-						var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/set/status");
-						request.cacheResponse = false;
-						request.useCache = false;
-						request.method = URLRequestMethod.POST;
-						var params:URLVariables = new URLVariables();
-						params.n = "remote-copy";
-						params.v = "";
-						request.data = params;
-						sendToURL(request);
-						trace("reset remote-copy");				
+						var t:Timer = new Timer(5000, 1);
+						t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+							var request:URLRequest = new URLRequest(SwitchUtils.baseURL(display.address) + "/set/status");
+							request.cacheResponse = false;
+							request.useCache = false;
+							request.method = URLRequestMethod.POST;
+							var params:URLVariables = new URLVariables();
+							params.n = "remote-copy";
+							params.v = "";
+							request.data = params;
+							sendToURL(request);
+							trace("reset remote-copy");				
+						});
+						t.start();			
 					}
 				}
 				if (status['delayed-update'] != _delayedUpdate) {
