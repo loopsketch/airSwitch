@@ -1754,6 +1754,7 @@
 				while (outDisplays.length > 0) {
 					var out:String = outDisplays.shift();
 					if (out != edit) {
+						dispatchEvent(new OperationStatusEvent(" "));
 						var request:URLRequest = new URLRequest(SwitchUtils.baseURL(out) + "/copy");
 						request.cacheResponse = false;
 						request.useCache = false;
