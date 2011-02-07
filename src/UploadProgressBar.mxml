@@ -37,7 +37,21 @@
 		public final function startUpload(baseURL:String):void {
 			_baseURL = baseURL;
 			_current = 0;
-			upload();
+			message.text = "アップロードの準備中...";
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				trace("clear stock files");
+				upload();
+			});
+			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+				trace("failed not clear stock files");
+				message.text = "異常が発生しました.";
+				pb_close.visible = true;
+			});
+			var request:URLRequest = new URLRequest(_baseURL + "/clear-stock");
+			request.cacheResponse = false;
+			request.useCache = false;
+			loader.load(request);
 		}
 
 		public final function setMessage(text:String):void {
@@ -48,6 +62,8 @@
 			if (_paths.length > _current) {
 				message.text = "アップロード: " + _paths[_current];
 				var request:URLRequest = new URLRequest(_baseURL + "/upload");
+				request.cacheResponse = false;
+				request.useCache = false;
 				request.method = URLRequestMethod.POST;
 				var variables:URLVariables = new URLVariables();
 				variables["path"] = _paths[_current];
