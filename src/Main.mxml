@@ -840,7 +840,7 @@
 					if (event.detail == Alert.YES) {
 						copyWorkspace();
 					}
-				});				
+				});
 			} else {
 				Alert.show("編集/出力ディスプレイを選択してください");				
 			}
@@ -1006,6 +1006,9 @@
 				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
 			});
 			scheduleEditor.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
+				editedWorkspace(event);
+			});
+			shortcutList.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
 				editedWorkspace(event);
 			});
 
@@ -1627,7 +1630,6 @@
 				shortcutList.dataProvider.removeItemAt(i);
 			}
 		}
-
 
 		/** ワークスペースの保存 */
 		private final function saveWorkspaceFile(display:XML):File {
