@@ -271,8 +271,8 @@
 				// 新規登録
 				_item.@id = SwitchUtils.createNewID(selector.workspace.medialist.item, "m");
 				_item.@name = mediaName.text;
-				_item.@start = start.text;
-				_item.@duration = duration.text;
+				_item.@start = start.text.replace(/\,/g, '');
+				_item.@duration = duration.text.replace(/\,/g, '');
 				_item.@params = params.text;
 				var pos:int = selector.dataProvider.length;
 				selector.dataProvider.addItemAt(_item, pos);
@@ -288,8 +288,8 @@
 			} else {
 				// 修正
 				baseItem.@name = mediaName.text;
-				baseItem.@start = start.text;
-				baseItem.@duration = duration.text;
+				baseItem.@start = start.text.replace(/\,/g, '');
+				baseItem.@duration = duration.text.replace(/\,/g, '');
 				baseItem.@params = params.text;
 				baseItem.setChildren(_item.children());
 				trace("edit item: " + baseItem.toXMLString());
