@@ -477,6 +477,7 @@
 		private var _watchLast:Number = 0;
 		private var _watchElapsed:Number = 0;
 
+		private var _alert:Alert = null;
 
 		// 初期化
 		private final function init():void {
@@ -613,7 +614,7 @@
 			} else if (_editedDisplay) {
 				if (i == 0) {
 					// 1→0への遷移の時、変更の有無を確認
-					Alert.show("変更されていますが、保存せずに移動してよろしいですか？", "アラート", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
+					Alert.show("変更されていますが、保存せずに移動してよろしいですか？", "保存の確認", Alert.YES | Alert.NO, this, function(event:CloseEvent):void {
 						if (event.detail == Alert.YES) {
 							uneditedWorkspace();
 							initDisplayConfig();
@@ -1150,7 +1151,8 @@
 					trace('workspace: ' + _signature);
 				} else if (_signature != status['workspace']) {
 					_signature = status['workspace'];
-					Alert.show("ワークスペースが更新されました");
+					if (_alert) PopUpManager.removePopUp(_alert);
+					_alert = Alert.show("ワークスペースが更新されました");
 				}
 				//if (status['set-text']) {
 				//	var data:Array = status['set-text'].split(":", 2);
