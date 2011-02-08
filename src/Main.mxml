@@ -1109,17 +1109,17 @@
 			try {
 				var status:Object = JSON.decode(json);
 				_stageName = status['stage-name'];
-				_currentPlaylist = status['current-playlist'];
-				_currentContent = status['current-content'];
+				_currentPlaylist = SwitchUtils.parseJSONString(status['current-playlist']);
+				_currentContent = SwitchUtils.parseJSONString(status['current-content']);
 				_timeRemain = status['time_remain'];
 				if (status['next-playlist'] != _currentPlaylist) {
-					_nextPlaylist = status['next-playlist'];
+					_nextPlaylist = SwitchUtils.parseJSONString(status['next-playlist']);
 				} else {
-					_nextPlaylist = "";
+					_nextPlaylist = '';
 				}
-				_nextContent = status['next-content'];
-				_preparedPlaylist = status['prepared-playlist'];
-				_preparedContent = status['prepared-content'];
+				_nextContent = SwitchUtils.parseJSONString(status['next-content']);
+				_preparedPlaylist = SwitchUtils.parseJSONString(status['prepared-playlist']);
+				_preparedContent = SwitchUtils.parseJSONString(status['prepared-content']);
 				if (status['brightness']) _brightness = status['brightness'];
 				if (_action != status['action']) {
 					_action = status['action'];

@@ -93,6 +93,14 @@
 			return null;
 		}
 
+		/** JSONの文字列をパース */
+		public static function parseJSONString(s:String):String {
+			if (s) {
+				return s.replace(/\&quot;/g, "\"");
+			}
+			return '';
+		}
+
 		/** xmlをファイル保存 */
 		public static function saveXML(xml:XML, file:File):Boolean {
 			var fs:FileStream = new FileStream();
