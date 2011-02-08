@@ -28,9 +28,21 @@
 			<mx:ComboBox id="template" labelField="@name" change="changeTemplate()" />
 		</mx:FormItem>
 	</mx:Form>
-	<mx:StringValidator source="{mediaName}" property="text" minLength="1"
-		requiredFieldError="メディア名が入力されていません"
-		tooShortError="メディア名が入力されていません" />
+	<mx:Array id="validators">
+		<mx:StringValidator source="{mediaName}" property="text" minLength="1"
+			requiredFieldError="メディア名が入力されていません"
+			tooShortError="メディア名が入力されていません" />
+		<mx:NumberValidator source="{start}" property="text" domain="int" required="false" 
+			minValue="0"
+			integerError="整数で入力してください"
+			invalidCharError="数値のみ入力できます"
+			lowerThanMinError="0以上を入力してください" />		
+		<mx:NumberValidator source="{duration}" property="text" domain="int" required="false" 
+			minValue="1"
+			integerError="整数で入力してください"
+			invalidCharError="数値のみ入力できます"
+			lowerThanMinError="1以上を入力してください" />
+	</mx:Array>
 	<mx:List id="mediaItemList" width="100%"
 		dataProvider="{_item.children()}" dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">
 		<mx:itemRenderer>
@@ -148,8 +160,16 @@
 		<mx:Button id="regist" label="登録" click="onRegist()" />
 		<mx:Button id="cancel" label="キャンセル" click="onClose()" />
 	</mx:HBox>
+	<mx:Sequence id="errorEffect" target="{this}" duration="100">
+		<mx:Move xBy="10" />
+		<mx:Move xBy="-20" />
+		<mx:Move xBy="20" />
+		<mx:Move xBy="-10" />
+	</mx:Sequence>
 	<mx:Script><![CDATA[
+		import mx.effects.Rotate;
 		import mx.managers.PopUpManager;
+		import mx.controls.Alert;
 
 		public var selector:MediaSelector;
 		public var baseItem:XML = null;
@@ -239,7 +259,14 @@
 
 		/** 登録処理 */
 		private final function onRegist():void {
-			if (mediaName.text.length == 0) return;
+			var errors:Array = mx.validators.Validator.validateAll(validators);
+            if (errors.length > 0) {
+				// ng
+				errorEffect.play();
+				return;
+            }
+			//if (mediaName.text.length == 0) return;
+
 			if (!_item.hasOwnProperty("@id")) {
 				// 新規登録
 				_item.@id = SwitchUtils.createNewID(selector.workspace.medialist.item, "m");
