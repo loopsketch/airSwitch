@@ -926,8 +926,16 @@
 
 		/** 操作画面初期化 */
 		private final function initPlayOperation():void {
+			while (preview.getChildren().length > 0) {
+				preview.removeChildAt(0);
+			}
 			_workspace = <workspace />;
 			unselectPlaylist();
+			playlistSelector.dataProvider = null;
+			mediaSelector.dataProvider = null;
+			playlistEditor.dataProvider = null;
+			scheduleEditor.dataProvider = null;
+			shortcutList.dataProvider = null;
 
 			if (isLocalMode()) {
 				_editable = false;
@@ -1079,6 +1087,9 @@
 			if (_previewTimer) {
 				_previewTimer.stop();
 			}
+			while (preview.getChildren().length > 0) {
+				preview.removeChildAt(0);
+			}			
 		}
 
 		/** ステータスモニタの開始 */
@@ -1182,6 +1193,15 @@
 			if (_statusTimer) {
 				_statusTimer.stop();
 			}
+			_stageName = '';
+			_currentPlaylist = '';
+			_currentContent = '';
+			_timeRemain = '';
+			_nextPlaylist = '';
+			_nextContent = '';
+			_preparedPlaylist = '';
+			_preparedContent = '';
+			_signature = null;
 		}
 
 
