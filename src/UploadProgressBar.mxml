@@ -110,6 +110,7 @@
 
 		/** クローズ処理 */
 		private final function onClose():void {
+			dispatchEvent(new UpdatedWorkspaceEvent());
 			PopUpManager.removePopUp(this);
 		}
 	]]></mx:Script>

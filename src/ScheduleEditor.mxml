@@ -17,6 +17,9 @@
 								var item:XML = outerDocument.selectedItem as XML;
 								if (item) {
 									var editor:ScheduleItemEditor = popup as ScheduleItemEditor;
+									editor.addEventListener(EditedWorkspaceEvent.EDITED, function(event:EditedWorkspaceEvent):void {
+										outerDocument.dispatchEvent(new EditedWorkspaceEvent());
+									});
 									editor.workspace = outerDocument._workspace;
 									editor.baseItem = item;
 									PopUpManager.centerPopUp(popup);

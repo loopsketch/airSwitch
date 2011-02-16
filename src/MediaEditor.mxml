@@ -320,6 +320,7 @@
 					}
 				}
 			}
+			dispatchEvent(new EditedWorkspaceEvent());
 			editFiles = [];
 			onClose();
 		}

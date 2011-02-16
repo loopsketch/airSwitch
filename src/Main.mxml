@@ -363,8 +363,7 @@
 							</mx:VBox>
 						</mx:TabNavigator>
 						<mx:Panel title="ショートカット" width="100%">
-							<svvitch:ShortcutList id="shortcutList"
-									dataProvider="{_workspace.shortcuts.item}" width="480" height="100" />
+							<svvitch:ShortcutList id="shortcutList" width="480" height="100" />
 							<mx:HBox width="100%">
 								<mx:Spacer width="100%"/>
 								<mx:Button id="deleteShortcutButton" label="－"  click="deleteShorcut(event)" />
@@ -518,10 +517,11 @@
 			});
 			addEventListener(KeyboardEvent.KEY_UP, function(event:KeyboardEvent):void {
 				if (!_editable && event.controlKey) {
-					trace('key:' + event.keyCode);
+					//trace('key:' + event.keyCode);
 					switch (event.keyCode) {
 					case 13: // Enterキー
 						switchContent();
+						break;
 					}
 				}
 			});
@@ -572,6 +572,7 @@
 		}
 
 		public final function editedWorkspace(event:Event):void {
+			trace('edited');
 			_editedDisplay = true;
 			editedSign.text = "*";
 			saveButton.setStyle("fillColors", [0xe66666, 0xff6666]);
@@ -992,24 +993,23 @@
 		// 操作を開始する
 		private final function startOperation(display:XML):void {
 			playlistSelector.setData(_workspace);
+			playlistSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			mediaSelector.setData(_workDir, display.address.text(), _workspace);
+			mediaSelector.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			playlistEditor.setData(_workspace);
+			playlistEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			scheduleEditor.setData(_workspace);
+			scheduleEditor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
+			shortcutList.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
-				editedWorkspace(event);
+			//	editedWorkspace(event);
 				shortcutList.dataProvider.refresh();
 				scheduleEditor.dataProvider.refresh();
 			});
 			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
-				editedWorkspace(event);
+			//	editedWorkspace(event);
 				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
-			});
-			scheduleEditor.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
-				editedWorkspace(event);
-			});
-			shortcutList.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
-				editedWorkspace(event);
 			});
 
 			var loader:URLLoader = new URLLoader();
@@ -1422,6 +1422,7 @@
 				playlistSelector.scrollToIndex(playlistSelector.selectedIndex);
 			});
 			t.start();
+			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		/** プレイリスト削除 */
@@ -1431,6 +1432,7 @@
 				playlistSelector.dataProvider.removeItemAt(i);
 				if (i > 0) playlistSelector.scrollToIndex(i - 1);
 				unselectPlaylist();
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1438,6 +1440,7 @@
 		private final function changePlaylistName(event:Event):void {
 			if (_editable && _playlist) {
 				_playlist.@name = playlistName.text;
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1446,6 +1449,7 @@
 			if (_editable && _playlist) {
 				_playlist.@color = colorPicker.selectedColor.toString(16);
 				//playlistSelector.dataProvider.update();
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1517,6 +1521,7 @@
 		private final function addMedia(event:Event):void {
 			var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
 			var editor:MediaEditor = popup as MediaEditor;
+			editor.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			editor.selector = mediaSelector;
 			//editor.workspace = _workspace;
 			PopUpManager.centerPopUp(editor);
@@ -1537,11 +1542,13 @@
 							}
 							if (_playlist) changePlaylist();
 							mediaSelector.deleteSelectedItem();
+							dispatchEvent(new EditedWorkspaceEvent());
 						}
 					});
 					return;
 				}
 				mediaSelector.deleteSelectedItem();
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1609,6 +1616,7 @@
 			scheduleEditor.dataProvider.addItemAt(s, pos);
 			scheduleEditor.selectedIndex = pos;
 			scheduleEditor.scrollToIndex(pos);
+			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		/** スケジュールアイテムの削除 */
@@ -1617,6 +1625,7 @@
 			if (i != -1) {
 				scheduleEditor.dataProvider.removeItemAt(i);
 				if (i > 0) scheduleEditor.scrollToIndex(i - 1);
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1628,6 +1637,7 @@
 					shortcutList.selectedIndex = i - 1;
 				}
 				shortcutList.dataProvider.removeItemAt(i);
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -1647,6 +1657,8 @@
 						var name:String = files[i].text();
 						if (name.indexOf("switch-data:") == 0) {
 							name = name.substr(12);
+						} else if (name.indexOf("http://") == 0) {
+							continue;
 						}
 						var file:File = _workDir.resolvePath("datas/" + display.address + "/" + name);
 						try {
@@ -1676,6 +1688,10 @@
 		}
 
 		private final function saveWorkspace(event:Event):void {
+			if (_uploader) {
+				trace('already updating');
+				return;
+			}
 			var display:XML = getEditDisplay();
 			if (display) {
 				var workspace:File = saveWorkspaceFile(display);
@@ -1730,6 +1746,10 @@
 						request.cacheResponse = false;
 						request.useCache = false;
 						loader.load(request);
+					});
+					_uploader.addEventListener(UpdatedWorkspaceEvent.COMPLETE, function(event:Event):void {
+						trace('update finished');
+						_uploader = null;
 					});
 					_uploader.startUpload(baseURL());
 

@@ -45,6 +45,7 @@
 			_workspace = workspace;
 			_baseURL = baseURL;
 			_selectCallBack = selectCallBack;
+			dataProvider = _workspace.shortcuts.item;
 		}
 
 		private final function checkDragEvent(event:DragEvent):Boolean {
@@ -65,6 +66,7 @@
 		}
 
 		override protected final function dragDropHandler(event:DragEvent):void {
+			dispatchEvent(new EditedWorkspaceEvent());
 			if (event.dragInitiator is ShortcutList) {
 				// 同じクラスからの場合はリストの入替えとする
 				super.dragDropHandler(event);
@@ -83,8 +85,8 @@
 			dataProvider.addItemAt(shortcut, pos);
 		}
 
-		override protected final function dragCompleteHandler(event:DragEvent):void {
-			super.dragCompleteHandler(event);
-		} 
+		//override protected final function dragCompleteHandler(event:DragEvent):void {
+		//	super.dragCompleteHandler(event);
+		//} 
 	]]></mx:Script>
 </mx:TileList>

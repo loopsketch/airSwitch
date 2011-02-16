@@ -17,6 +17,9 @@
 								var item:XML = outerDocument.selectedItem as XML;
 								if (item) {
 									var editor:PlaylistItemEditor = popup as PlaylistItemEditor;
+									editor.addEventListener(EditedWorkspaceEvent.EDITED, function(event:EditedWorkspaceEvent):void {
+										outerDocument.dispatchEvent(new EditedWorkspaceEvent());
+									});
 									editor.workspace = outerDocument._workspace;
 									editor.baseItem = item;
 									PopUpManager.centerPopUp(popup);
@@ -87,7 +90,7 @@
 		}
 
 		override protected final function dragDropHandler(event:DragEvent):void {
-			//dispatchEvent(new EditedWorkspaceEvent());
+			dispatchEvent(new EditedWorkspaceEvent());
 
 			var pos:int = calculateDropIndex(event);
 			if (event.dragInitiator is PlaylistEditor) {

@@ -18,6 +18,9 @@
 								if (outerDocument.dragEnabled) {
 									popup = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
 									var editor:MediaEditor = popup as MediaEditor;
+									editor.addEventListener(EditedWorkspaceEvent.EDITED, function(event:EditedWorkspaceEvent):void {
+										outerDocument.dispatchEvent(new EditedWorkspaceEvent());
+									});
 									editor.selector = outerDocument;
 									editor.baseItem = item;
 								//} else {
@@ -255,7 +258,9 @@
 				} else {
 					dataProvider.addItem(item);
 				}
-				trace("drop[" + pos + "] <" + item.@id + "> " + file.name);				
+				dataProvider.refresh();
+				trace("drop[" + pos + "] <" + item.@id + "> " + file.name);
+				dispatchEvent(new EditedWorkspaceEvent());
 			}
 		}
 
@@ -285,7 +290,7 @@
 				data.@name = name;
 				data.@id = SwitchUtils.createNewID(XMLList(dataProvider), "m");
 			}
-			//dispatchEvent(new EditedWorkspaceEvent());
+			dispatchEvent(new EditedWorkspaceEvent());
 		}
 
 		//override protected final function dragCompleteHandler(event:DragEvent):void {
