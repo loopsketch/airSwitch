@@ -1487,6 +1487,7 @@
 					if (result.text != null) {
 						trace("text: " + result.text);
 						selectContent();
+						dispatchEvent(new EditedWorkspaceEvent());
 					} else {
 						Alert.show("not set playlist text!");						
 					}

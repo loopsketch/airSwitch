@@ -182,14 +182,24 @@
 
 		// PopUpManager.centerPopUp()した後に呼ばれる
 		private final function init():void {
+			template.dataProvider.addItem(<item />);
+			for each (var item:XML in selector.workspace.templates.item) {
+				template.dataProvider.addItem(new XML(item));
+			}
+			template.selectedIndex = 0;
 			if (baseItem) {
 				_item = new XML(baseItem);
-			} else {
-				template.dataProvider.addItem(<item />);
-				for each (var item:XML in selector.workspace.templates.item) {
-					template.dataProvider.addItem(new XML(item));
+				if (_item.@template) {
+					var i:int = 0;
+					for each (var data:XML in template.dataProvider) {
+						if (_item.@template == data.@id) {
+							template.selectedIndex = i;
+							break;
+						}
+						i++;
+					}
 				}
-				template.selectedIndex = 0;
+			} else {
 				_item = <item name="新しいメディア" />;
 			}
 			if (_item.children().length() > 0) {
@@ -272,7 +282,11 @@
 				_item.@id = SwitchUtils.createNewID(selector.workspace.medialist.item, "m");
 				_item.@name = mediaName.text;
 				_item.@start = start.text.replace(/\,/g, '');
-				_item.@duration = duration.text.replace(/\,/g, '');
+				if (_item.@type == 'image' && duration.text == '') {
+					_item.@duration = '15000';
+				} else {
+					_item.@duration = duration.text.replace(/\,/g, '');
+				}
 				_item.@params = params.text;
 				var pos:int = selector.dataProvider.length;
 				selector.dataProvider.addItemAt(_item, pos);
@@ -289,7 +303,11 @@
 				// 修正
 				baseItem.@name = mediaName.text;
 				baseItem.@start = start.text.replace(/\,/g, '');
-				baseItem.@duration = duration.text.replace(/\,/g, '');
+				if (baseItem.@type == 'image' && duration.text == '') {
+					baseItem.@duration = '15000';
+				} else {
+					baseItem.@duration = duration.text.replace(/\,/g, '');
+				}
 				baseItem.@params = params.text;
 				baseItem.setChildren(_item.children());
 				trace("edit item: " + baseItem.toXMLString());
