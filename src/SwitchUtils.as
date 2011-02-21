@@ -1,8 +1,10 @@
 ﻿package  
 {
-	import flash.filesystem.*;
-
 	import com.adobe.utils.NumberFormatter;
+	import com.adobe.crypto.MD5;
+	import com.adobe.crypto.MD5Stream;
+	import flash.filesystem.*;
+	import flash.utils.ByteArray;
 	import mx.collections.ArrayCollection;
 	import mx.utils.StringUtil;
 
@@ -208,6 +210,26 @@
 				}				
 			}
 			return null;
+		}
+
+		/** MD5を計算します */
+		public static function calculateMD5(file:File):String {
+			var result:String;
+			var fs:FileStream = new FileStream();
+			try {
+				fs.open(file, FileMode.READ);
+				var buf:ByteArray = new ByteArray();
+				fs.readBytes(buf);
+				trace('calculate md5');
+				var md5:MD5Stream = new MD5Stream();
+				md5.update(buf);
+				result = md5.complete();
+				trace('match result: ' + result);
+			} catch (error:Error) {
+				trace('failed md5 check: ' + error.message);
+			}
+			fs.close();
+			return result;
 		}
 	}
 }

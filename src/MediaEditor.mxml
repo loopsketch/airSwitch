@@ -38,10 +38,10 @@
 			invalidCharError="数値のみ入力できます"
 			lowerThanMinError="0以上を入力してください" />		
 		<mx:NumberValidator source="{duration}" property="text" domain="int" required="false" 
-			minValue="1"
+			minValue="1000"
 			integerError="整数で入力してください"
 			invalidCharError="数値のみ入力できます"
-			lowerThanMinError="1以上を入力してください" />
+			lowerThanMinError="1000ミリ秒以上を入力してください" />
 	</mx:Array>
 	<mx:List id="mediaItemList" width="100%"
 		dataProvider="{_item.children()}" dragEnabled="true" dropEnabled="true" dragMoveEnabled="true">

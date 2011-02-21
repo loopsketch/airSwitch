@@ -340,7 +340,7 @@
 									<mx:TextInput id="playlistName" text="" change="changePlaylistName(event)" width="300" />
 								</mx:HBox>
 								<mx:HBox width="100%">
-									<mx:TextArea id="playlistText" width="100%" height="80" editable="false" />
+									<mx:TextArea id="playlistText" width="100%" height="80" editable="false" maxChars="1000" />
 									<mx:VBox height="100%">
 										<mx:Spacer height="100%" />
 										<mx:Button id="textUpdateButton" label="TEXT" click="updatePlaylistText(event)"
@@ -1160,13 +1160,15 @@
 						transition.selectedIndex = 0;
 					}
 				}
-				if (_signature == null) {
-					_signature = status['workspace'];
-					trace('workspace: ' + _signature);
-				} else if (_signature != status['workspace']) {
-					_signature = status['workspace'];
-					if (_alert) PopUpManager.removePopUp(_alert);
-					_alert = Alert.show("ワークスペースが更新されました");
+				if (status['workspace']) {
+					if (_signature == null) {
+						_signature = status['workspace'];
+						trace('workspace: ' + _signature);
+					} else if (_signature != status['workspace']) {
+						_signature = status['workspace'];
+						if (_alert) PopUpManager.removePopUp(_alert);
+						_alert = Alert.show("ワークスペースが更新されました");
+					}
 				}
 				//if (status['set-text']) {
 				//	var data:Array = status['set-text'].split(":", 2);
@@ -1176,13 +1178,8 @@
 				//		trace(playlists[i].toXMLString());
 				//	}
 				//}
-				if ((_preparedContent != null && _preparedContent.length > 0) || (_nextContent != null && _nextContent.length > 0)) {
-					swButton.setStyle("fillColors", [0x66e666, 0x66ff66]);
-					swButton.enabled = true;
-				} else {
-					swButton.setStyle("fillColors", [0xe6eeee, 0xffffff]);
-					swButton.enabled = false;
-				}
+
+				updateSwitchButton();
 			} catch (error:Error) {
 				trace(error.message + ":" + json);
 			}
@@ -1303,6 +1300,23 @@
 				scheduleEditor.dragEnabled = false;
 				addScheduleItemButton.enabled = false;
 				deleteScheduleItemButton.enabled = false;
+			}
+			updateSwitchButton();
+		}
+
+		private final function updateSwitchButton():void {
+			if (_editable) {
+				swButton.setStyle("fillColors", [0xe6eeee, 0xffffff]);
+				swButton.enabled = false;
+
+			} else {
+				if ((_preparedContent != null && _preparedContent.length > 0) || (_nextContent != null && _nextContent.length > 0)) {
+					swButton.setStyle("fillColors", [0x66e666, 0x66ff66]);
+					swButton.enabled = true;
+				} else {
+					swButton.setStyle("fillColors", [0xe6eeee, 0xffffff]);
+					swButton.enabled = false;
+				}				
 			}
 		}
 
@@ -1737,7 +1751,7 @@
 					// 転送処理
 					_uploader.addFile(workspace.name, workspace);
 					_uploader.addEventListener(Event.COMPLETE, function(event:Event):void {
-						_signature = null;
+						//_signature = null;
 						var loader:URLLoader = new URLLoader();
 						loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 							trace("update complete");
@@ -1748,6 +1762,8 @@
 								if (!result.update) {
 									_uploader.setMessage("保存に失敗しました");
 								} else {
+									//_signature = null;
+									_signature = SwitchUtils.calculateMD5(workspace);
 									mediaSelector.clearUploadFiles();
 									PopUpManager.removePopUp(_uploader);
 									uneditedWorkspace();
