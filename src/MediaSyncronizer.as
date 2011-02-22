@@ -92,7 +92,7 @@
 		public final function getFileStatus():void {
 			if (_mediaSet.length > 0) {
 				var media:String = _mediaSet.shift();
-				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + media + "チェック中...";
+				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") チェック中...";
 				dispatchEvent(new OperationStatusEvent(status));
 				var loader:URLLoader = new URLLoader();
 				var request:URLRequest = new URLRequest(_baseURL + "/files?path=" + media);
@@ -193,8 +193,8 @@
 			//}
 		/** ファイルダウンロード */
 		public final function downloadFile(path:String):void {
-			var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中...";
-			dispatchEvent(new OperationStatusEvent(status));
+			//var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中...";
+			//dispatchEvent(new OperationStatusEvent(status));
 			var stream:URLStream = new URLStream();
 			var request:URLRequest = new URLRequest(_baseURL + "/download?path=" + path);
 			request.cacheResponse = false;
@@ -207,6 +207,9 @@
 				//buf.clear();
 				if (stream.connected) stream.readBytes(buf);
 				fs.writeBytes(buf);
+				var progress:int = (event.bytesLoaded * 100 / event.bytesTotal);
+				var status:String = "(" + (_size - _mediaSet.length) + "/" + _size + ") " + path + "ダウンロード中... " + progress + "%";
+				dispatchEvent(new OperationStatusEvent(status));
 			});
 			stream.addEventListener(Event.COMPLETE, function(event:Event):void {
 				stream.close();
