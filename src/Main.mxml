@@ -1011,12 +1011,12 @@
 			shortcutList.setData(_workspace, baseURL(), setPlaylist);
 			shortcutList.addEventListener(EditedWorkspaceEvent.EDITED, editedWorkspace);
 			playlistSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
-			//	editedWorkspace(event);
+				// editedWorkspace(event);
 				shortcutList.dataProvider.refresh();
 				scheduleEditor.dataProvider.refresh();
 			});
 			mediaSelector.dataProvider.addEventListener(CollectionEvent.COLLECTION_CHANGE, function(event:CollectionEvent):void {
-			//	editedWorkspace(event);
+				// editedWorkspace(event);
 				if (playlistEditor.dataProvider) playlistEditor.dataProvider.refresh();
 			});
 
