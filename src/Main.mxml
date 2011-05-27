@@ -366,7 +366,8 @@
 							<svvitch:ShortcutList id="shortcutList" width="480" height="100" />
 							<mx:HBox width="100%">
 								<mx:Spacer width="100%"/>
-								<mx:Button id="deleteShortcutButton" label="－"  click="deleteShorcut(event)" />
+								<mx:Button id="deleteShortcutButton" label="－" click="deleteShorcut(event)" />
+								<mx:Button id="returnButton" label="復帰" click="returnPlaylist(event)" enabled="false" />
 							</mx:HBox>
 						</mx:Panel>
 					</mx:VBox>
@@ -449,6 +450,7 @@
 		[Bindable] public var _nextPlaylist:String = "";
 		[Bindable] public var _nextContent:String = "";
 		[Bindable] public var _preparedPlaylist:String = "";
+		private var _preparedPlaylistID = null;
 		[Bindable] public var _preparedContent:String = "";
 		[Bindable] public var _brightness:int = 50;
 		private var _signature:String;
@@ -475,6 +477,11 @@
 		//private var _activeStopWatch:Boolean = false;
 		private var _watchLast:Number = 0;
 		private var _watchElapsed:Number = 0;
+
+		private var _playingPlaylistID:String = null;
+		private var _playingIndex:int = -0;
+		private var _returnPlaylistID:String = null;
+		private var _returnIndex:int = -0;
 
 		private var _alert:Alert = null;
 
@@ -1126,6 +1133,9 @@
 				_stageName = status['stage-name'];
 				_currentPlaylist = SwitchUtils.parseJSONString(status['current-playlist']);
 				_currentContent = SwitchUtils.parseJSONString(status['current-content']);
+				_playingPlaylistID = SwitchUtils.parseJSONString(status['current-playlist-id']);
+				var playlistIndex:String = SwitchUtils.parseJSONString(status['current-index']);
+				if (playlistIndex && playlistIndex.length > 0) _playingIndex = parseInt(playlistIndex);
 				_timeRemain = status['time_remain'];
 				if (status['next-playlist'] != _currentPlaylist) {
 					_nextPlaylist = SwitchUtils.parseJSONString(status['next-playlist']);
@@ -1134,6 +1144,7 @@
 				}
 				_nextContent = SwitchUtils.parseJSONString(status['next-content']);
 				_preparedPlaylist = SwitchUtils.parseJSONString(status['prepared-playlist']);
+				_preparedPlaylistID = SwitchUtils.parseJSONString(status['prepared-playlist-id']);
 				_preparedContent = SwitchUtils.parseJSONString(status['prepared-content']);
 				if (status['brightness']) _brightness = status['brightness'];
 				if (_action != status['action']) {
@@ -1603,6 +1614,11 @@
 
 		/** 切替 */
 		private final function switchContent():void {
+			_returnPlaylistID = _playingPlaylistID;
+			_returnIndex = _playingIndex;
+			returnButton.enabled = true;
+			trace("set return playlist " + _returnPlaylistID + "-" + _returnIndex);
+
 			var loader:URLLoader = new URLLoader();
 			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 				var loader:URLLoader = URLLoader(event.currentTarget);
@@ -1674,6 +1690,58 @@
 				shortcutList.dataProvider.removeItemAt(i);
 				dispatchEvent(new EditedWorkspaceEvent());
 			}
+		}
+
+		/** プレイリストの復帰 */
+		private final function returnPlaylist(event:Event):void  {
+			var loader:URLLoader = new URLLoader();
+			loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+				var loader:URLLoader = URLLoader(event.currentTarget);
+				var json:String = loader.data;
+				try {
+					var result:Object = JSON.decode(json);
+					if (!result.playlist) {
+						Alert.show("not prepared playlist!");
+					} else {
+						trace("set playlist");
+						var t:Timer = new Timer(500, 0);
+						t.addEventListener(TimerEvent.TIMER, function(event:TimerEvent):void {
+							trace("wait preparing");
+							if (_returnPlaylistID != _preparedPlaylistID) {
+								return;
+							}
+							t.stop();
+							loader = new URLLoader();
+							loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+								trace('do switch');
+							});
+							loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+								trace('failed error');
+							});
+							var request:URLRequest = new URLRequest(baseURL() + "/switch");
+							request.cacheResponse = false;
+							request.useCache = false;
+							loader.load(request);
+						});
+						t.start();
+					}
+				} catch (error:Error) {
+					trace(error.message + ":" + json);
+				}
+			});
+			loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:Event):void {
+				trace('remote display no result');
+			});
+			swButton.enabled = false;
+			var request:URLRequest = new URLRequest(baseURL() + "/set/playlist");
+			request.cacheResponse = false;
+			request.useCache = false;
+			request.method = URLRequestMethod.POST;
+			var params:URLVariables = new URLVariables();
+			params.pl = _returnPlaylistID;
+			params.i = (_returnIndex < 0)?0: _returnIndex;
+			request.data = params;
+			loader.load(request);
 		}
 
 		/** ワークスペースの保存 */
