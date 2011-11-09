@@ -9,7 +9,7 @@
     <movie width="1024" />
     <movie height="768" />
     <movie version="2" />
-    <movie minorVersion="0" />
+    <movie minorVersion="7" />
     <movie platform="AIR" />
     <movie background="#000000" />
     <movie preferredSDK="Flex 3.4, AIR 2.0.2;3.4.1, 2.0.2;" />
