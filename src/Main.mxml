@@ -411,7 +411,6 @@
 		import mx.managers.DragManager;
 		import mx.managers.PopUpManager;
 
-		import com.adobe.serialization.json.JSON;  
 		import com.rails2u.net.URLLoaderWithTimeout;
 
 		[Embed(source="../images/switch_logo.png")]
@@ -450,7 +449,7 @@
 		[Bindable] public var _nextPlaylist:String = "";
 		[Bindable] public var _nextContent:String = "";
 		[Bindable] public var _preparedPlaylist:String = "";
-		private var _preparedPlaylistID = null;
+		private var _preparedPlaylistID:String = null;
 		[Bindable] public var _preparedContent:String = "";
 		[Bindable] public var _brightness:int = 50;
 		private var _signature:String;
@@ -717,7 +716,7 @@
 			try {
 				var display:XML = _displays.display[_monitorDisplay];
 				display.status = 'OK';
-				var status:Object = JSON.decode(json);
+				var status:Object = JSON.parse(json);
 				var remoteCopy:String = status['remote-copy'];
 				if (remoteCopy) {
 					if (remoteCopy == "1") {
@@ -1032,7 +1031,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var status:Object = JSON.decode(json);
+					var status:Object = JSON.parse(json);
 					var fonts:Array = status['fonts'];
 					mediaSelector.setFonts(fonts);
 					trace('fonts: ' + fonts);
@@ -1129,7 +1128,7 @@
 
 			var json:String = loader.data;
 			try {
-				var status:Object = JSON.decode(json);
+				var status:Object = JSON.parse(json);
 				_stageName = status['stage-name'];
 				_currentPlaylist = SwitchUtils.parseJSONString(status['current-playlist']);
 				_currentContent = SwitchUtils.parseJSONString(status['current-content']);
@@ -1384,7 +1383,7 @@
 				request.cacheResponse = false;
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
-					var result:Object = JSON.decode(event.currentTarget.data);
+					var result:Object = JSON.parse(event.currentTarget.data);
 					var text:String = result['text'];
 					if (text && _playlist.@text != text) {
 						playlistText.text = text;
@@ -1508,7 +1507,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.decode(json);
+					var result:Object = JSON.parse(json);
 					if (result.text != null) {
 						trace("text: " + result.text);
 						selectContent();
@@ -1624,7 +1623,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.decode(json);
+					var result:Object = JSON.parse(json);
 					if (!result.switched) {
 						Alert.show("not switched!");
 					} else {
@@ -1699,7 +1698,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.decode(json);
+					var result:Object = JSON.parse(json);
 					if (!result.playlist) {
 						Alert.show("not prepared playlist!");
 					} else {
@@ -1826,7 +1825,7 @@
 							var loader:URLLoader = URLLoader(event.currentTarget);
 							var json:String = loader.data;
 							try {
-								var result:Object = JSON.decode(json);
+								var result:Object = JSON.parse(json);
 								if (!result.update) {
 									_uploader.setMessage("保存に失敗しました");
 								} else {

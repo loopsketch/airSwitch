@@ -16,7 +16,7 @@
 		import mx.controls.ProgressBarMode;
 		import mx.managers.PopUpManager;
 
-		import com.adobe.serialization.json.JSON;  
+		//import com.adobe.serialization.json.JSON;  
 
 		private var _current:int = 0;
 		private var _paths:Array = [];
@@ -75,7 +75,7 @@
 				_files[_current].addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, function(event:DataEvent):void {
 					var json:String = event.data;
 					try {
-						var result:Object = JSON.decode(json);
+						var result:Object = JSON.parse(json);
 						if (result.upload) {
 							trace("upload complete: " + event.target.name);
 							_current++;

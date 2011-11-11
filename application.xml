@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<application xmlns="http://ns.adobe.com/air/application/2.0">
+<application xmlns="http://ns.adobe.com/air/application/2.7">
   <id>airSvvitch</id>
-  <version>1.01</version>
   <filename>airSvvitch</filename>
   <name>airSvvitch</name>
   <copyright>www.loopsketch.com</copyright>
@@ -14,6 +13,8 @@
     <minimizable>false</minimizable>
     <maximizable>false</maximizable>
     <resizable>false</resizable>
+    <aspectRatio>landscape</aspectRatio>
+    <autoOrients>false</autoOrients>
   </initialWindow>
   <supportedProfiles>desktop</supportedProfiles>
   <icon>
@@ -26,4 +27,6 @@
 	More options:
 	http://livedocs.adobe.com/flex/3/html/File_formats_1.html#1043413
 	-->
+  <versionLabel>1.10</versionLabel>
+  <versionNumber>1.10</versionNumber>
 </application>
