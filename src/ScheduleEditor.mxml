@@ -8,13 +8,12 @@
 					import mx.core.Application;
 					import mx.managers.PopUpManager;
 					import mx.core.IFlexDisplayObject;
-					import mx.core.FlexGlobals;
 
 					private function edit(event:Event):void {
 						if (outerDocument.dragEnabled) {
 							var i:int = outerDocument.selectedIndex;
 							if (i != -1) {
-								var popup:IFlexDisplayObject = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, ScheduleItemEditor, true);
+								var popup:IFlexDisplayObject = PopUpManager.createPopUp(Application.application as DisplayObject, ScheduleItemEditor, true);
 								var item:XML = outerDocument.selectedItem as XML;
 								if (item) {
 									var editor:ScheduleItemEditor = popup as ScheduleItemEditor;

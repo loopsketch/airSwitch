@@ -16,7 +16,7 @@
 
 	import com.adobe.crypto.MD5;
 	import com.adobe.crypto.MD5Stream;
-	//import com.adobe.serialization.json.JSON;
+	import com.adobe.serialization.json.JSON;
 	//import ch.capi.net.CompositeMassLoader;
 
 
@@ -102,7 +102,7 @@
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					var json:String = event.target.data;
 					try {
-						var result:Object = JSON.parse(json);
+						var result:Object = JSON.decode(json);
 						// files.name/size/modified/md5
 						trace("result: " + result.files.name);
 						var file:File = getFile(result.path);

@@ -6,7 +6,6 @@
 	verticalScrollPolicy="off"
 	frameRate="30">
 	<mx:Style>
-		@namespace "http://www.adobe.com/2006/mxml";
 		global{
 			modal-transparency: 0.8;
 			modal-transparency-blur: 0;
@@ -412,6 +411,7 @@
 		import mx.managers.DragManager;
 		import mx.managers.PopUpManager;
 
+		import com.adobe.serialization.json.JSON;  
 		import com.rails2u.net.URLLoaderWithTimeout;
 
 		[Embed(source="../images/switch_logo.png")]
@@ -717,7 +717,7 @@
 			try {
 				var display:XML = _displays.display[_monitorDisplay];
 				display.status = 'OK';
-				var status:Object = JSON.parse(json);
+				var status:Object = JSON.decode(json);
 				var remoteCopy:String = status['remote-copy'];
 				if (remoteCopy) {
 					if (remoteCopy == "1") {
@@ -1032,7 +1032,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var status:Object = JSON.parse(json);
+					var status:Object = JSON.decode(json);
 					var fonts:Array = status['fonts'];
 					mediaSelector.setFonts(fonts);
 					trace('fonts: ' + fonts);
@@ -1129,7 +1129,7 @@
 
 			var json:String = loader.data;
 			try {
-				var status:Object = JSON.parse(json);
+				var status:Object = JSON.decode(json);
 				_stageName = status['stage-name'];
 				_currentPlaylist = SwitchUtils.parseJSONString(status['current-playlist']);
 				_currentContent = SwitchUtils.parseJSONString(status['current-content']);
@@ -1384,7 +1384,7 @@
 				request.cacheResponse = false;
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
-					var result:Object = JSON.parse(event.currentTarget.data);
+					var result:Object = JSON.decode(event.currentTarget.data);
 					var text:String = result['text'];
 					if (text && _playlist.@text != text) {
 						playlistText.text = text;
@@ -1508,7 +1508,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.parse(json);
+					var result:Object = JSON.decode(json);
 					if (result.text != null) {
 						trace("text: " + result.text);
 						selectContent();
@@ -1624,7 +1624,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.parse(json);
+					var result:Object = JSON.decode(json);
 					if (!result.switched) {
 						Alert.show("not switched!");
 					} else {
@@ -1699,7 +1699,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.parse(json);
+					var result:Object = JSON.decode(json);
 					if (!result.playlist) {
 						Alert.show("not prepared playlist!");
 					} else {
@@ -1826,7 +1826,7 @@
 							var loader:URLLoader = URLLoader(event.currentTarget);
 							var json:String = loader.data;
 							try {
-								var result:Object = JSON.parse(json);
+								var result:Object = JSON.decode(json);
 								if (!result.update) {
 									_uploader.setMessage("保存に失敗しました");
 								} else {

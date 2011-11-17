@@ -16,7 +16,7 @@
 	//import flash.net.URLStream;
 	import mx.controls.Alert;
 
-	//import com.adobe.serialization.json.JSON;
+	import com.adobe.serialization.json.JSON;
 
 
 	/**
@@ -59,7 +59,7 @@
 			_file.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, function(event:DataEvent):void {
 				var json:String = event.data;
 				try {
-					var result:Object = JSON.parse(json);
+					var result:Object = JSON.decode(json);
 					if (result.upload) {
 						// 正常終了
 						addFont();
@@ -136,7 +136,7 @@
 					tmp.deleteFile();
 					var json:String = event.data;
 					try {
-						var result:Object = JSON.parse(json);
+						var result:Object = JSON.decode(json);
 						if (result.upload) {
 							// 正常終了
 							dispatchEvent(new OperationStatusEvent("送信完了しました"));
@@ -171,7 +171,7 @@
 				var loader:URLLoader = URLLoader(event.currentTarget);
 				var json:String = loader.data;
 				try {
-					var result:Object = JSON.parse(json);
+					var result:Object = JSON.decode(json);
 					if (result.update) {
 						dispatchEvent(new OperationStatusEvent("ワークスペースを更新しました"));
 					} else {
