@@ -8,6 +8,7 @@
 					import mx.core.Application;
 					import mx.managers.PopUpManager;
 					import mx.core.IFlexDisplayObject;
+					import mx.core.FlexGlobals;
 
 					private function edit(event:Event):void {
 						var i:int = outerDocument.selectedIndex;
@@ -16,7 +17,7 @@
 							var item:XML = outerDocument.selectedItem as XML;
 							if (item) {
 								if (outerDocument.dragEnabled) {
-									popup = PopUpManager.createPopUp(Application.application as DisplayObject, MediaEditor, true);
+									popup = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, MediaEditor, true);
 									var editor:MediaEditor = popup as MediaEditor;
 									editor.addEventListener(EditedWorkspaceEvent.EDITED, function(event:EditedWorkspaceEvent):void {
 										outerDocument.dispatchEvent(new EditedWorkspaceEvent());

@@ -6,6 +6,7 @@
 	verticalScrollPolicy="off"
 	frameRate="30">
 	<mx:Style>
+		@namespace "http://www.adobe.com/2006/mxml";
 		global{
 			modal-transparency: 0.8;
 			modal-transparency-blur: 0;
