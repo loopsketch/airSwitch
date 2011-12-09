@@ -101,6 +101,7 @@
 				request.useCache = false;
 				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
 					var json:String = event.target.data;
+					json = json.replace(/\\/, "\\\\");
 					try {
 						var result:Object = JSON.decode(json);
 						// files.name/size/modified/md5
