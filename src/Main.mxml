@@ -397,6 +397,7 @@
 		import flash.net.URLVariables;
 		import flash.utils.getTimer;
 		import flash.utils.Timer;
+		import flash.system.Capabilities;
 		import mx.controls.Image;
 		import mx.controls.Alert;
 		import mx.controls.Button;
@@ -487,6 +488,7 @@
 
 		// 初期化
 		private final function init():void {
+			trace("os: " + Capabilities.os);
 			var screenBounds:Rectangle = Screen.mainScreen.bounds; 
 			systemManager.stage.nativeWindow.x = (screenBounds.width - systemManager.stage.nativeWindow.width) / 2; 
 			systemManager.stage.nativeWindow.y = (screenBounds.height - systemManager.stage.nativeWindow.height) / 2; 
@@ -990,11 +992,16 @@
 					startOperation(display);
 					startPreview(); // 繋がった場合、プレビューの開始
 					startStatus();
-					if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
-						_mediaSyncronizer = new MediaSyncronizer(_workDir, _displays, _workspace);
-						_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-							updateStatusText(event.text);
-						});
+					if (_workDir.exists) {
+						if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
+							_mediaSyncronizer = new MediaSyncronizer(_workDir, _displays, _workspace);
+							_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+								updateStatusText(event.text);
+							});
+						}						
+					} else {
+						dispatchEvent(new OperationStatusEvent("操作オンリーモードで稼動"));
+						editMode.enabled = false;
 					}
 				});
 				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
@@ -1746,7 +1753,7 @@
 
 		/** ワークスペースの保存 */
 		private final function saveWorkspaceFile(display:XML):File {
-			if (_workspace.deletes.length() > 0) {
+			if (_workDir.exists && _workspace.deletes.length() > 0) {
 				dispatchEvent(new OperationStatusEvent("不要ファイルの削除処理中..."));
 				var items:XMLList = _workspace.medialist.item;
 				var files:XMLList = _workspace.deletes.file;
