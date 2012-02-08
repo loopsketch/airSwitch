@@ -6,11 +6,11 @@
 :: http://livedocs.adobe.com/flex/3/html/distributing_apps_4.html#1037515
 
 :: Path to Flex SDK binaries
-set PATH=%PATH%;D:\flex3_air2\bin
+set PATH=%PATH%;E:\flex3\bin
 
 :: Certificate information
 set NAME=avix
-set PASSWORD=avix1261
+set PASSWORD=fd
 set CERTIFICATE=SelfSigned.pfx
 
 call adt -certificate -cn %NAME% -c JP 1024-RSA %CERTIFICATE% %PASSWORD%
