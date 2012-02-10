@@ -47,12 +47,13 @@
 
 		/** 編集ディスプレイの取得 */
 		public static function getEditDisplay(displays:XML):XML {
-			if (displays) {
+			if (displays && displays.display.length() > 0) {
 				for (var i:int = 0; i < displays.display.length(); i++) {
 					if (displays.display[i].edit == 'true') {
 						return displays.display[i];
 					}
 				}
+				return displays.display[0];
 			}
 			return null;
 		}

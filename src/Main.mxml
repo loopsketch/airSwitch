@@ -685,10 +685,14 @@
 					trace("'/get/display-status' no result: " + _monitorDisplay);
 					//var display:XML = _displays.display[_monitorDisplay];
 					//dispatchEvent(new OperationStatusEvent("![" + display.name + "]に接続できません"));
-					var display:XML = _displays.display[_monitorDisplay];
-					display.status = '-';
-					_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
-					startDisplayCheck();
+					try {
+						var display:XML = _displays.display[_monitorDisplay];
+						display.status = '-';
+						_monitorDisplay = (_monitorDisplay + 1) % _displays.display.length();
+						startDisplayCheck();
+					} catch (error:Error) {
+						trace("<Error> " + error.message);
+					}
 				});
 				if (SwitchUtils.isLocalMode(display)) {
 					display.status = 'OK';
@@ -805,6 +809,9 @@
 			display.description = displayDescription.text;
 			_displays.appendChild(display);
 			trace('display: ' + _displays.display.length);
+			if ( _displays.display.length() > 0) {
+				startDisplayCheck();
+			}
 		}
 
 		/** ファイル送信 */
@@ -938,77 +945,85 @@
 			while (preview.getChildren().length > 0) {
 				preview.removeChildAt(0);
 			}
-			_workspace = <workspace />;
-			unselectPlaylist();
-			playlistSelector.dataProvider = null;
-			mediaSelector.dataProvider = null;
-			playlistEditor.dataProvider = null;
-			scheduleEditor.dataProvider = null;
-			shortcutList.dataProvider = null;
+			var display:XML = getEditDisplay();
+			if (display) {
+				_workspace = <workspace />;
+				unselectPlaylist();
+				playlistSelector.dataProvider = null;
+				mediaSelector.dataProvider = null;
+				playlistEditor.dataProvider = null;
+				scheduleEditor.dataProvider = null;
+				shortcutList.dataProvider = null;
 
-			if (isLocalMode()) {
-				_editable = false;
-				toggleEditMode(null);
-				var display:XML = getEditDisplay();
-				var fs:FileStream = new FileStream();
-				try {
-					var file:File = _workDir.resolvePath("datas/" + display.address.text() + "/workspace.xml");
-					if (file.exists) {
-						fs.open(file, FileMode.READ);
-						var xml:String = fs.readUTFBytes(fs.bytesAvailable);
-						_workspace = XML(xml);						
-					} else {
-						_workspace =
-						<workspace>
-						  <templates>
-							<item id="t000" name="動画" type="movie">
-							  <movie>%%1</movie>
-							</item>
-							<item duration="60000" id="t001" name="静止画" type="image">
-							  <image>%%1</image>
-							</item>
-						  </templates>
-						</workspace>;
-					}
-				} catch (error:Error) {
-					trace("<Error> " + error.message);
-				} finally {
-					fs.close();		
-				}
-				startOperation(display);
-
-			} else {
-				_editable = true;
-				toggleEditMode(null);
-				var loader:URLLoader = new URLLoader();
-				var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
-				request.cacheResponse = false;
-				request.useCache = false;
-				loader.addEventListener(Event.COMPLETE, function(event:Event):void {
-					_signature = null;
-					_workspace = new XML(event.target.data);
+				if (isLocalMode()) {
+					_editable = false;
+					toggleEditMode(null);
 					var display:XML = getEditDisplay();
-					saveWorkspaceFile(display);
-					startOperation(display);
-					startPreview(); // 繋がった場合、プレビューの開始
-					startStatus();
-					if (!isMobile() && _workDir.exists) {
-						if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
-							_mediaSyncronizer = new MediaSyncronizer(_workDir, _displays, _workspace);
-							_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
-								updateStatusText(event.text);
-							});
-						}						
-					} else {
-						dispatchEvent(new OperationStatusEvent("操作オンリーモードで稼動"));
-						editMode.enabled = false;
+					var fs:FileStream = new FileStream();
+					try {
+						var file:File = _workDir.resolvePath("datas/" + display.address.text() + "/workspace.xml");
+						if (file.exists) {
+							fs.open(file, FileMode.READ);
+							var xml:String = fs.readUTFBytes(fs.bytesAvailable);
+							_workspace = XML(xml);						
+						} else {
+							_workspace =
+							<workspace>
+							  <templates>
+								<item id="t000" name="動画" type="movie">
+								  <movie>%%1</movie>
+								</item>
+								<item duration="60000" id="t001" name="静止画" type="image">
+								  <image>%%1</image>
+								</item>
+							  </templates>
+							</workspace>;
+						}
+					} catch (error:Error) {
+						trace("<Error> " + error.message);
+					} finally {
+						fs.close();		
 					}
-				});
-				loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
-					trace(event);
-					Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
-				});
-				loader.load(request);
+					startOperation(display);
+
+				} else {
+					_editable = true;
+					toggleEditMode(null);
+					var loader:URLLoader = new URLLoader();
+					var request:URLRequest = new URLRequest(baseURL() + "/download?path=workspace.xml");
+					request.cacheResponse = false;
+					request.useCache = false;
+					loader.addEventListener(Event.COMPLETE, function(event:Event):void {
+						_signature = null;
+						_workspace = new XML(event.target.data);
+						var display:XML = getEditDisplay();
+						if (display) {
+							saveWorkspaceFile(display);
+							startOperation(display);
+							startPreview(); // 繋がった場合、プレビューの開始
+							startStatus();
+							if (!isMobile() && _workDir.exists) {
+								if (!_mediaSyncronizer || !_mediaSyncronizer.running()) {
+									_mediaSyncronizer = new MediaSyncronizer(_workDir, _displays, _workspace);
+									_mediaSyncronizer.addEventListener(OperationStatusEvent.OPERATION_STATUS, function(event:OperationStatusEvent):void {
+										updateStatusText(event.text);
+									});
+								}						
+							} else {
+								dispatchEvent(new OperationStatusEvent("操作オンリーモードで稼動"));
+								editMode.enabled = false;
+							}						
+						}
+					});
+					loader.addEventListener(IOErrorEvent.IO_ERROR, function(event:IOErrorEvent):void {
+						trace(event);
+						Alert.show("ワークスペースが読込めません.ディスプレイの設定を確認してください.");
+					});
+					loader.load(request);
+				}				
+			} else {
+				Alert.show("ディスプレイの設定を確認してください.");				
+				navigation.selectedIndex = 0;
 			}
 		}
 
