@@ -79,6 +79,8 @@
 			for (var name:String in map) {
 				if (name.indexOf("switch-data:") == 0) {
 					name = name.substr(12);
+					var param:int = name.lastIndexOf('?');
+					if (param != -1) name.substring(0, param); 
 				} else if (name.indexOf("http://") == 0) {
 					continue;
 				}
